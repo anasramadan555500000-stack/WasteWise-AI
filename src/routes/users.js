@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { getClientIp } = require('../utils/ip');
 
 // GET /api/admin/users (Admin Only)
 router.get('/', authenticateToken, requireRole('admin'), (req, res) => {
@@ -34,7 +35,7 @@ router.get('/export', authenticateToken, requireRole('admin'), (req, res) => {
     entityType: 'DATABASE',
     entityId: null,
     details: { totalProducts: exportData.products.length, totalTransactions: exportData.transactions.length },
-    ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+    ip: getClientIp(req)
   });
 
   res.setHeader('Content-Type', 'application/json');
@@ -48,7 +49,7 @@ router.post('/reset', authenticateToken, requireRole('admin'), (req, res) => {
     const auditUser = {
       id: req.user.id,
       name: req.user.name,
-      ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+      ip: getClientIp(req)
     };
 
     db.resetToMockData(auditUser);

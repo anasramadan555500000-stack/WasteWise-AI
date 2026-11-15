@@ -13,6 +13,9 @@ const userRoutes = require('./src/routes/users');
 
 const app = express();
 
+// Trust reverse proxies (Vercel, AWS API Gateway, Cloudflare) for accurate req.ip
+app.set('trust proxy', 1);
+
 // Security Headers Middleware
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');

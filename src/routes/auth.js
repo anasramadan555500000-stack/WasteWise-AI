@@ -6,6 +6,7 @@ const config = require('../config');
 const db = require('../db');
 const { validateLogin } = require('../middleware/validate');
 const { authenticateToken } = require('../middleware/auth');
+const { getClientIp } = require('../utils/ip');
 
 // POST /api/auth/login
 router.post('/login', validateLogin, (req, res) => {
@@ -48,7 +49,7 @@ router.post('/login', validateLogin, (req, res) => {
         entityType: 'USER',
         entityId: user.id,
         details: { email: user.email, role: user.role },
-        ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+        ip: getClientIp(req)
       });
     } catch (auditErr) {
       console.warn('[Auth] Non-fatal audit log warning:', auditErr.message);
@@ -92,7 +93,7 @@ router.post('/logout', authenticateToken, (req, res) => {
         entityType: 'USER',
         entityId: req.user.id,
         details: { email: req.user.email },
-        ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+        ip: getClientIp(req)
       });
     }
 

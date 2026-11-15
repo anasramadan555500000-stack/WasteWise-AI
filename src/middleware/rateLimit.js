@@ -2,6 +2,7 @@
  * In-memory sliding window rate limiting middleware for WasteWise AI.
  * Protects auth and checkout routes from brute-force and flood attacks.
  */
+const { getClientIp } = require('../utils/ip');
 
 function createRateLimiter({ windowMs, maxRequests, message }) {
   const ipRequests = new Map();
@@ -18,7 +19,7 @@ function createRateLimiter({ windowMs, maxRequests, message }) {
   if (cleanupInterval.unref) cleanupInterval.unref();
 
   const limiter = (req, res, next) => {
-    const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] || '127.0.0.1';
+    const ip = getClientIp(req);
     const now = Date.now();
 
     let record = ipRequests.get(ip);
@@ -69,5 +70,6 @@ const checkoutLimiter = createRateLimiter({
 module.exports = {
   createRateLimiter,
   authLimiter,
-  checkoutLimiter
+  checkoutLimiter,
+  getClientIp
 };

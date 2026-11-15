@@ -6,6 +6,7 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 const { validateProduct } = require('../middleware/validate');
 const { enrichProductWithExpiry } = require('../utils/expiry');
 const { fetchProductsFromSupabase, syncProductToSupabase } = require('../supabase');
+const { getClientIp } = require('../utils/ip');
 
 function isValidId(id) {
   return typeof id === 'string' && /^[a-zA-Z0-9_-]{2,64}$/.test(id);
@@ -82,7 +83,7 @@ router.post('/', authenticateToken, requireRole('admin'), validateProduct, async
     const auditUser = {
       id: req.user.id,
       name: req.user.name,
-      ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+      ip: getClientIp(req)
     };
 
     const newProduct = db.addProduct(req.body, auditUser);
@@ -112,7 +113,7 @@ router.put('/:id', authenticateToken, requireRole('admin'), validateProduct, asy
     const auditUser = {
       id: req.user.id,
       name: req.user.name,
-      ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+      ip: getClientIp(req)
     };
 
     const updated = db.updateProduct(id, req.body, auditUser);
@@ -144,7 +145,7 @@ router.delete('/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const auditUser = {
     id: req.user.id,
     name: req.user.name,
-    ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+    ip: getClientIp(req)
   };
 
   const success = db.deleteProduct(id, auditUser);
@@ -181,7 +182,7 @@ router.patch('/:id/markdown', authenticateToken, requireRole('admin'), (req, res
     const auditUser = {
       id: req.user.id,
       name: req.user.name,
-      ip: req.ip || req.connection.remoteAddress || '127.0.0.1'
+      ip: getClientIp(req)
     };
 
     const updated = db.applyMarkdown(id, pct, auditUser);

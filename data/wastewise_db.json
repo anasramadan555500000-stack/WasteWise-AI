@@ -117,8 +117,8 @@
       "description": "Chilled refreshing fizzy soft drink can 330ml, served ice cold."
     },
     {
-      "id": "prod_fc_1794770206469",
-      "sku": "FC-550",
+      "id": "prod_fc_1794770869026",
+      "sku": "FC-139",
       "name": "Expired Test Tender Chicken",
       "category": "Meals",
       "costPrice": 25,
@@ -130,7 +130,7 @@
       "expiryDate": "2026-11-10",
       "expiry_date": "2026-11-10",
       "alertDaysBefore": 2,
-      "barcode": "622100792563",
+      "barcode": "622100715406",
       "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
       "image_url": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
       "description": ""
@@ -138,11 +138,11 @@
   ],
   "transactions": [
     {
-      "id": "txn_1794770206459_703",
-      "invoiceNumber": "INV-2026-52034",
+      "id": "txn_1794770869019_738",
+      "invoiceNumber": "INV-2026-26678",
       "cashierId": "usr_cashier",
       "cashierName": "Karim Zaki (POS Cashier)",
-      "timestamp": "2026-11-15T19:16:46.459Z",
+      "timestamp": "2026-11-15T19:27:49.019Z",
       "items": [
         {
           "productId": "prod_fc_101",
@@ -235,8 +235,8 @@
   ],
   "auditLogs": [
     {
-      "id": "audit_1794770206560_789",
-      "timestamp": "2026-11-15T19:16:46.560Z",
+      "id": "audit_1794770869113_509",
+      "timestamp": "2026-11-15T19:27:49.113Z",
       "userId": "usr_cashier",
       "userName": "Karim Zaki (POS Cashier)",
       "action": "USER_LOGOUT",
@@ -248,8 +248,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794770206553_571",
-      "timestamp": "2026-11-15T19:16:46.553Z",
+      "id": "audit_1794770869106_490",
+      "timestamp": "2026-11-15T19:27:49.106Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "EXPORT_DATABASE_BACKUP",
@@ -262,8 +262,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794770206522_579",
-      "timestamp": "2026-11-15T19:16:46.522Z",
+      "id": "audit_1794770869074_888",
+      "timestamp": "2026-11-15T19:27:49.074Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "MARKDOWN_PRODUCT",
@@ -277,8 +277,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794770205927_246",
-      "timestamp": "2026-11-15T19:16:45.927Z",
+      "id": "audit_1794770854838_789",
+      "timestamp": "2026-11-15T19:27:34.838Z",
       "userId": "usr_cashier",
       "userName": "Karim Zaki (POS Cashier)",
       "action": "USER_LOGIN",
@@ -291,8 +291,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794770205746_123",
-      "timestamp": "2026-11-15T19:16:45.746Z",
+      "id": "audit_1794770854728_745",
+      "timestamp": "2026-11-15T19:27:34.728Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "USER_LOGIN",
@@ -306,7 +306,7 @@
     },
     {
       "id": "audit_init_1",
-      "timestamp": "2026-11-15T19:16:45.472Z",
+      "timestamp": "2026-11-15T19:27:34.577Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "INIT_SYSTEM",
@@ -319,11 +319,11 @@
     }
   ],
   "revokedTokens": [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3NzAyMDUsImV4cCI6MTc5NDgxMzQwNX0.DEWEJPS-jIQ6wlCpadfDG5EopJQljUXnVAvoLNkrgBQ"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3NzA4NTQsImV4cCI6MTc5NDgxNDA1NH0.3B6zWdjdTSwwBNeaWQwyo5pfKXTnEaN2Eiuv8L6zGDM"
   ],
   "metadata": {
-    "createdAt": "2026-11-15T19:16:45.474Z",
-    "lastUpdated": "2026-11-15T19:16:46.560Z",
+    "createdAt": "2026-11-15T19:27:34.579Z",
+    "lastUpdated": "2026-11-15T19:27:49.113Z",
     "systemDate": "2026-11-15"
   }
 }
