@@ -34,3 +34,6 @@ dist/
 build/
 coverage/
 .nyc_output/
+
+.vercel
+.env*

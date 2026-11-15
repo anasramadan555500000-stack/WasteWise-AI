@@ -52,19 +52,27 @@ app.use(express.urlencoded({ extended: true, limit: '15kb' }));
 
 // Apply Brute-force & Flooding Rate Limiters
 app.use('/api/auth/login', authLimiter);
+app.use('/auth/login', authLimiter);
 app.use('/api/checkout', checkoutLimiter);
+app.use('/checkout', checkoutLimiter);
 
 // Initialize Database
 db.getProducts();
 
-// API Routes
+// API Routes (supports both /api/ prefix and direct rewrite paths)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/products', productRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api', transactionRoutes); // supports POST /api/checkout directly
+app.use('/transactions', transactionRoutes);
+app.use('/api', transactionRoutes);
 app.use('/api/admin/analytics', analyticsRoutes);
+app.use('/admin/analytics', analyticsRoutes);
 app.use('/api/admin/users', userRoutes);
-app.use('/api/admin', userRoutes); // supports POST /api/admin/reset, GET /api/admin/export, GET /api/admin/audit-logs
+app.use('/admin/users', userRoutes);
+app.use('/api/admin', userRoutes);
+app.use('/admin', userRoutes);
 
 // Serve Static Frontend Assets
 app.use(express.static(path.join(__dirname, 'public')));
