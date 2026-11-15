@@ -77,6 +77,7 @@ app.use((req, res, next) => {
 
 // Global Hardened Error Handler
 app.use((err, req, res, next) => {
+  console.error('[Unhandled Server Error]:', err);
   if (err.type === 'entity.too.large') {
     return res.status(413).json({
       success: false,
@@ -85,13 +86,9 @@ app.use((err, req, res, next) => {
   }
 
   const statusCode = err.status || err.statusCode || 500;
-  const isProduction = process.env.NODE_ENV === 'production';
-
   res.status(statusCode).json({
     success: false,
-    error: isProduction && statusCode === 500
-      ? 'An unexpected internal enterprise server error occurred.'
-      : (err.message || 'Internal Enterprise Server Error.')
+    error: err.message || 'Internal Enterprise Server Error.'
   });
 });
 

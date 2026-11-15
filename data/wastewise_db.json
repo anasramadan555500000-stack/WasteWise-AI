@@ -117,8 +117,8 @@
       "description": "Chilled refreshing fizzy soft drink can 330ml, served ice cold."
     },
     {
-      "id": "prod_fc_1794767632654",
-      "sku": "FC-101",
+      "id": "prod_fc_1794770206469",
+      "sku": "FC-550",
       "name": "Expired Test Tender Chicken",
       "category": "Meals",
       "costPrice": 25,
@@ -130,7 +130,7 @@
       "expiryDate": "2026-11-10",
       "expiry_date": "2026-11-10",
       "alertDaysBefore": 2,
-      "barcode": "622100278945",
+      "barcode": "622100792563",
       "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
       "image_url": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
       "description": ""
@@ -138,11 +138,11 @@
   ],
   "transactions": [
     {
-      "id": "txn_1794767632646_140",
-      "invoiceNumber": "INV-2026-73335",
+      "id": "txn_1794770206459_703",
+      "invoiceNumber": "INV-2026-52034",
       "cashierId": "usr_cashier",
       "cashierName": "Karim Zaki (POS Cashier)",
-      "timestamp": "2026-11-15T18:33:52.646Z",
+      "timestamp": "2026-11-15T19:16:46.459Z",
       "items": [
         {
           "productId": "prod_fc_101",
@@ -235,35 +235,8 @@
   ],
   "auditLogs": [
     {
-      "id": "audit_1794767752783_875",
-      "timestamp": "2026-11-15T18:35:52.783Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "USER_LOGOUT",
-      "entityType": "USER",
-      "entityId": "usr_admin",
-      "details": {
-        "email": "admin@wastewise.com"
-      },
-      "ip": "::1"
-    },
-    {
-      "id": "audit_1794767735446_466",
-      "timestamp": "2026-11-15T18:35:35.446Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "USER_LOGIN",
-      "entityType": "USER",
-      "entityId": "usr_admin",
-      "details": {
-        "email": "admin@wastewise.com",
-        "role": "admin"
-      },
-      "ip": "::1"
-    },
-    {
-      "id": "audit_1794767632749_155",
-      "timestamp": "2026-11-15T18:33:52.749Z",
+      "id": "audit_1794770206560_789",
+      "timestamp": "2026-11-15T19:16:46.560Z",
       "userId": "usr_cashier",
       "userName": "Karim Zaki (POS Cashier)",
       "action": "USER_LOGOUT",
@@ -275,8 +248,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794767632732_252",
-      "timestamp": "2026-11-15T18:33:52.732Z",
+      "id": "audit_1794770206553_571",
+      "timestamp": "2026-11-15T19:16:46.553Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "EXPORT_DATABASE_BACKUP",
@@ -289,8 +262,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794767632688_550",
-      "timestamp": "2026-11-15T18:33:52.688Z",
+      "id": "audit_1794770206522_579",
+      "timestamp": "2026-11-15T19:16:46.522Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "MARKDOWN_PRODUCT",
@@ -304,8 +277,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794767631944_321",
-      "timestamp": "2026-11-15T18:33:51.944Z",
+      "id": "audit_1794770205927_246",
+      "timestamp": "2026-11-15T19:16:45.927Z",
       "userId": "usr_cashier",
       "userName": "Karim Zaki (POS Cashier)",
       "action": "USER_LOGIN",
@@ -318,8 +291,8 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_1794767631846_409",
-      "timestamp": "2026-11-15T18:33:51.846Z",
+      "id": "audit_1794770205746_123",
+      "timestamp": "2026-11-15T19:16:45.746Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "USER_LOGIN",
@@ -332,26 +305,25 @@
       "ip": "127.0.0.1"
     },
     {
-      "id": "audit_reset_1794767631705",
-      "timestamp": "2026-11-15T18:33:51.705Z",
+      "id": "audit_init_1",
+      "timestamp": "2026-11-15T19:16:45.472Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
-      "action": "RESET_DATABASE",
+      "action": "INIT_SYSTEM",
       "entityType": "SYSTEM",
       "entityId": null,
       "details": {
-        "message": "Database reset to original enterprise mock state."
+        "message": "WasteWise AI system initialized with enterprise defaults."
       },
       "ip": "127.0.0.1"
     }
   ],
   "revokedTokens": [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3Njc2MzEsImV4cCI6MTc5NDgxMDgzMX0.fYBzC6Q73YyL1wYYqWN-jrhpR94cj6OhKYOWQwIKOc0",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9hZG1pbiIsImVtYWlsIjoiYWRtaW5Ad2FzdGV3aXNlLmNvbSIsInJvbGUiOiJhZG1pbiIsIm5hbWUiOiJUYXJpcSBNYW5zb3VyIChHZW5lcmFsIE1hbmFnZXIpIiwiaWF0IjoxNzk0NzY3NzM1LCJleHAiOjE3OTQ4MTA5MzV9.sx5GfgTq-krOlAbzsigYiFm_6Y4wy0bF0dmD9uQMPaY"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3NzAyMDUsImV4cCI6MTc5NDgxMzQwNX0.DEWEJPS-jIQ6wlCpadfDG5EopJQljUXnVAvoLNkrgBQ"
   ],
   "metadata": {
-    "createdAt": "2026-11-15T18:33:51.706Z",
-    "lastUpdated": "2026-11-15T18:35:52.783Z",
+    "createdAt": "2026-11-15T19:16:45.474Z",
+    "lastUpdated": "2026-11-15T19:16:46.560Z",
     "systemDate": "2026-11-15"
   }
 }

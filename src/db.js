@@ -4,81 +4,103 @@ const config = require('./config');
 const { calculateDaysUntilExpiry } = require('./utils/expiry');
 const { defaultUsers, defaultProducts, defaultTransactions } = require('./seedData');
 
-const DB_DIR = path.dirname(config.DATA_FILE);
+// In-memory database cache ensuring 100% resilience on serverless platforms (Vercel, AWS Lambda)
+let memoryDb = null;
 
-function ensureDbFile() {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(config.DATA_FILE)) {
-    const initialData = {
-      users: defaultUsers,
-      products: defaultProducts,
-      transactions: defaultTransactions,
-      auditLogs: [
-        {
-          id: 'audit_init_1',
-          timestamp: new Date().toISOString(),
-          userId: 'usr_admin',
-          userName: 'Tariq Mansour (General Manager)',
-          action: 'INIT_SYSTEM',
-          entityType: 'SYSTEM',
-          entityId: null,
-          details: { message: 'WasteWise AI system initialized with enterprise defaults.' },
-          ip: '127.0.0.1'
-        }
-      ],
-      revokedTokens: [],
-      metadata: {
-        createdAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        systemDate: config.SIMULATED_CURRENT_DATE
+function getInitialData() {
+  return {
+    users: defaultUsers,
+    products: defaultProducts,
+    transactions: defaultTransactions,
+    auditLogs: [
+      {
+        id: 'audit_init_1',
+        timestamp: new Date().toISOString(),
+        userId: 'usr_admin',
+        userName: 'Tariq Mansour (General Manager)',
+        action: 'INIT_SYSTEM',
+        entityType: 'SYSTEM',
+        entityId: null,
+        details: { message: 'WasteWise AI system initialized with enterprise defaults.' },
+        ip: '127.0.0.1'
       }
-    };
-    saveDb(initialData);
-  }
+    ],
+    revokedTokens: [],
+    metadata: {
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      systemDate: config.SIMULATED_CURRENT_DATE
+    }
+  };
 }
 
 function loadDb() {
-  ensureDbFile();
-  try {
-    const raw = fs.readFileSync(config.DATA_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    parsed.auditLogs = parsed.auditLogs || [];
-    parsed.revokedTokens = parsed.revokedTokens || [];
-    return parsed;
-  } catch (err) {
-    console.error('Error reading DB file, recreating with defaults...', err);
-    const initialData = {
-      users: defaultUsers,
-      products: defaultProducts,
-      transactions: defaultTransactions,
-      auditLogs: [],
-      revokedTokens: [],
-      metadata: {
-        createdAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        systemDate: config.SIMULATED_CURRENT_DATE
-      }
-    };
-    saveDb(initialData);
-    return initialData;
+  if (memoryDb) {
+    return memoryDb;
   }
+
+  // 1. Try reading from primary data file (local data/ or /tmp on serverless)
+  if (fs.existsSync(config.DATA_FILE)) {
+    try {
+      const raw = fs.readFileSync(config.DATA_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      parsed.auditLogs = parsed.auditLogs || [];
+      parsed.revokedTokens = parsed.revokedTokens || [];
+      parsed.users = parsed.users && parsed.users.length > 0 ? parsed.users : defaultUsers;
+      parsed.products = parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts;
+      parsed.transactions = parsed.transactions || defaultTransactions;
+      memoryDb = parsed;
+      return memoryDb;
+    } catch (err) {
+      console.warn('[DB] Primary data file read notice:', err.message);
+    }
+  }
+
+  // 2. Try reading from bundled static data file (data/wastewise_db.json)
+  if (config.STATIC_DATA_FILE && fs.existsSync(config.STATIC_DATA_FILE)) {
+    try {
+      const raw = fs.readFileSync(config.STATIC_DATA_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      parsed.auditLogs = parsed.auditLogs || [];
+      parsed.revokedTokens = parsed.revokedTokens || [];
+      parsed.users = parsed.users && parsed.users.length > 0 ? parsed.users : defaultUsers;
+      parsed.products = parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts;
+      parsed.transactions = parsed.transactions || defaultTransactions;
+      memoryDb = parsed;
+      // Gracefully attempt to write to /tmp for subsequent reads
+      saveDb(memoryDb);
+      return memoryDb;
+    } catch (err) {
+      console.warn('[DB] Static data file read notice:', err.message);
+    }
+  }
+
+  // 3. Fallback to hardcoded seed defaults
+  memoryDb = getInitialData();
+  saveDb(memoryDb);
+  return memoryDb;
 }
 
 function saveDb(data) {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
+  memoryDb = data;
   data.metadata = data.metadata || {};
   data.metadata.lastUpdated = new Date().toISOString();
   data.auditLogs = data.auditLogs || [];
   data.revokedTokens = data.revokedTokens || [];
-  
-  // Atomic write via temp file
-  const tempPath = `${config.DATA_FILE}.tmp.${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tempPath, config.DATA_FILE);
+
+  // Graceful file persistence: Never crash if filesystem is read-only (e.g. Vercel Lambda)
+  try {
+    const dir = path.dirname(config.DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const tempPath = `${config.DATA_FILE}.tmp.${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tempPath, config.DATA_FILE);
+  } catch (err) {
+    // Non-fatal on read-only environments
+    console.info('[DB] Notice: Filesystem persistence skipped (read-only environment). In-memory state maintained.', err.message);
+  }
 }
 
 // Audit Logging
@@ -310,7 +332,7 @@ function applyMarkdown(id, discountPercentage, auditUser = null) {
   return product;
 }
 
-// Transactions & POS Checkout (Zero-client-price trust, atomic deduction, expiry check)
+// Transactions & POS Checkout
 function getTransactions() {
   const db = loadDb();
   return (db.transactions || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -326,7 +348,6 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
   const validatedItems = [];
   let subtotal = 0;
 
-  // Pass 1: Validate stock, check expiry, compute authoritative prices from DB
   for (const item of items) {
     const product = db.products.find(p => p.id === item.productId);
     if (!product) {
@@ -338,18 +359,15 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
       throw new Error(`Invalid quantity for product "${product.name}".`);
     }
 
-    // Zero client trust on expiry: Reject selling expired items
     const daysUntilExpiry = calculateDaysUntilExpiry(product.expiryDate || product.expiry_date, config.SIMULATED_CURRENT_DATE);
     if (daysUntilExpiry <= 0) {
       throw new Error(`Cannot sell expired item: "${product.name}". Stock must be disposed.`);
     }
 
-    // Atomic stock check
     if (product.stock < requestedQty) {
       throw new Error(`Insufficient stock for "${product.name}". Requested: ${requestedQty}, Available: ${product.stock}.`);
     }
 
-    // Authoritative unit price from DB only - completely ignore any client prices/discounts
     const effectiveUnitPrice = (product.discountPrice !== null && product.discountPrice !== undefined)
       ? Number(product.discountPrice)
       : Number(product.sellingPrice || product.price);
@@ -368,7 +386,6 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
     });
   }
 
-  // Pass 2: Decrement stock atomically
   for (const item of validatedItems) {
     item.productRef.stock -= item.quantity;
     delete item.productRef;
@@ -417,30 +434,7 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
 }
 
 function resetToMockData(auditUser = null) {
-  const initialData = {
-    users: defaultUsers,
-    products: defaultProducts,
-    transactions: defaultTransactions,
-    auditLogs: [
-      {
-        id: `audit_reset_${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        userId: auditUser ? auditUser.id : 'usr_admin',
-        userName: auditUser ? auditUser.name : 'Tariq Mansour (General Manager)',
-        action: 'RESET_DATABASE',
-        entityType: 'SYSTEM',
-        entityId: null,
-        details: { message: 'Database reset to original enterprise mock state.' },
-        ip: auditUser ? auditUser.ip : '127.0.0.1'
-      }
-    ],
-    revokedTokens: [],
-    metadata: {
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
-      systemDate: config.SIMULATED_CURRENT_DATE
-    }
-  };
+  const initialData = getInitialData();
   saveDb(initialData);
   return initialData;
 }
