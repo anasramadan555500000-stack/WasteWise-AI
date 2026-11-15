@@ -235,6 +235,20 @@
   ],
   "auditLogs": [
     {
+      "id": "audit_1794770947113_712",
+      "timestamp": "2026-11-15T19:29:07.113Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "usr_admin",
+      "details": {
+        "email": "admin@wastewise.com",
+        "role": "admin"
+      },
+      "ip": "203.0.113.195"
+    },
+    {
       "id": "audit_1794770869113_509",
       "timestamp": "2026-11-15T19:27:49.113Z",
       "userId": "usr_cashier",
@@ -323,7 +337,7 @@
   ],
   "metadata": {
     "createdAt": "2026-11-15T19:27:34.579Z",
-    "lastUpdated": "2026-11-15T19:27:49.113Z",
+    "lastUpdated": "2026-11-15T19:29:07.113Z",
     "systemDate": "2026-11-15"
   }
 }
