@@ -1,0 +1,357 @@
+{
+  "users": [
+    {
+      "id": "usr_admin",
+      "name": "Tariq Mansour (General Manager)",
+      "email": "admin@wastewise.com",
+      "passwordHash": "$2b$10$L7OQIROITRnhAJ3L5VZz8e.2Jl3Ij7Y1aGXpxUmpB/vLYGEU39neu",
+      "role": "admin",
+      "createdAt": "2026-01-10T08:00:00Z",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "usr_cashier",
+      "name": "Karim Zaki (POS Cashier)",
+      "email": "cashier@wastewise.com",
+      "passwordHash": "$2b$10$CgWiNuzSgenY/clcMvrnF.3oacqzVRBOZcPidow9fjZOH9fBi4BPi",
+      "role": "cashier",
+      "createdAt": "2026-03-01T07:45:00Z",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod_fc_101",
+      "sku": "FC-101",
+      "name": "Crispy Chicken Bucket (12 Pcs)",
+      "category": "Buckets",
+      "costPrice": 160,
+      "sellingPrice": 250,
+      "discountPrice": 187.5,
+      "stock": 44,
+      "minStockThreshold": 15,
+      "expiryDate": "2026-11-19",
+      "alertDaysBefore": 2,
+      "barcode": "622100100101",
+      "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
+      "description": "12 pieces of golden, ultra-crispy marinated secret-recipe fried chicken with signature spices."
+    },
+    {
+      "id": "prod_fc_102",
+      "sku": "FC-102",
+      "name": "Spicy Fried Chicken Meal (3 Pcs)",
+      "category": "Meals",
+      "costPrice": 60,
+      "sellingPrice": 95,
+      "discountPrice": null,
+      "stock": 120,
+      "minStockThreshold": 30,
+      "expiryDate": "2026-11-17",
+      "alertDaysBefore": 2,
+      "barcode": "622100100102",
+      "image": "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&auto=format&fit=crop&q=80",
+      "description": "3 pieces hot & spicy crispy fried chicken, served fresh with Cajun seasoned crust."
+    },
+    {
+      "id": "prod_fc_103",
+      "sku": "FC-103",
+      "name": "French Fries (Large)",
+      "category": "Sides",
+      "costPrice": 18,
+      "sellingPrice": 35,
+      "discountPrice": null,
+      "stock": 200,
+      "minStockThreshold": 50,
+      "expiryDate": "2026-11-20",
+      "alertDaysBefore": 2,
+      "barcode": "622100100103",
+      "image": "https://images.unsplash.com/photo-1576107232684-1279f3908594?w=600&auto=format&fit=crop&q=80",
+      "description": "Extra-crispy golden cut salted French fries, piping hot and freshly fried."
+    },
+    {
+      "id": "prod_fc_104",
+      "sku": "FC-104",
+      "name": "Garlic Coleslaw Salad",
+      "category": "Sides",
+      "costPrice": 10,
+      "sellingPrice": 20,
+      "discountPrice": null,
+      "stock": 80,
+      "minStockThreshold": 20,
+      "expiryDate": "2026-11-16",
+      "alertDaysBefore": 2,
+      "barcode": "622100100104",
+      "image": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80",
+      "description": "Traditional freshly shredded cabbage and carrots in creamy garlic mayonnaise dressing."
+    },
+    {
+      "id": "prod_fc_105",
+      "sku": "FC-105",
+      "name": "Special Cheddar Sauce",
+      "category": "Sauces",
+      "costPrice": 7,
+      "sellingPrice": 15,
+      "discountPrice": null,
+      "stock": 150,
+      "minStockThreshold": 35,
+      "expiryDate": "2026-11-25",
+      "alertDaysBefore": 2,
+      "barcode": "622100100105",
+      "image": "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&auto=format&fit=crop&q=80",
+      "description": "Rich, melted sharp warm cheddar cheese dipping cup with jalapeño hints."
+    },
+    {
+      "id": "prod_fc_106",
+      "sku": "FC-106",
+      "name": "Soft Drink Can",
+      "category": "Drinks",
+      "costPrice": 12,
+      "sellingPrice": 20,
+      "discountPrice": null,
+      "stock": 300,
+      "minStockThreshold": 60,
+      "expiryDate": "2027-01-14",
+      "alertDaysBefore": 2,
+      "barcode": "622100100106",
+      "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80",
+      "description": "Chilled refreshing fizzy soft drink can 330ml, served ice cold."
+    },
+    {
+      "id": "prod_fc_1794767632654",
+      "sku": "FC-101",
+      "name": "Expired Test Tender Chicken",
+      "category": "Meals",
+      "costPrice": 25,
+      "sellingPrice": 50,
+      "price": 50,
+      "discountPrice": null,
+      "stock": 10,
+      "minStockThreshold": 15,
+      "expiryDate": "2026-11-10",
+      "expiry_date": "2026-11-10",
+      "alertDaysBefore": 2,
+      "barcode": "622100278945",
+      "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
+      "image_url": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
+      "description": ""
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_1794767632646_140",
+      "invoiceNumber": "INV-2026-73335",
+      "cashierId": "usr_cashier",
+      "cashierName": "Karim Zaki (POS Cashier)",
+      "timestamp": "2026-11-15T18:33:52.646Z",
+      "items": [
+        {
+          "productId": "prod_fc_101",
+          "name": "Crispy Chicken Bucket (12 Pcs)",
+          "quantity": 1,
+          "unitPrice": 250,
+          "costPrice": 160,
+          "total": 250
+        }
+      ],
+      "subtotal": 250,
+      "tax": 20,
+      "total": 270,
+      "paymentMethod": "cash",
+      "amountTendered": 300,
+      "changeDue": 30
+    },
+    {
+      "id": "txn_fc_901",
+      "invoiceNumber": "INV-2026-901",
+      "cashierId": "usr_cashier",
+      "cashierName": "Karim Zaki",
+      "timestamp": "2026-11-15T15:30:00Z",
+      "items": [
+        {
+          "productId": "prod_fc_101",
+          "name": "Crispy Chicken Bucket (12 Pcs)",
+          "quantity": 1,
+          "unitPrice": 250,
+          "total": 250
+        },
+        {
+          "productId": "prod_fc_103",
+          "name": "French Fries (Large)",
+          "quantity": 2,
+          "unitPrice": 35,
+          "total": 70
+        },
+        {
+          "productId": "prod_fc_106",
+          "name": "Soft Drink Can",
+          "quantity": 2,
+          "unitPrice": 20,
+          "total": 40
+        }
+      ],
+      "subtotal": 360,
+      "tax": 28.8,
+      "total": 388.8,
+      "paymentMethod": "cash",
+      "amountTendered": 400,
+      "changeDue": 11.2
+    },
+    {
+      "id": "txn_fc_900",
+      "invoiceNumber": "INV-2026-900",
+      "cashierId": "usr_cashier",
+      "cashierName": "Karim Zaki",
+      "timestamp": "2026-11-15T13:10:00Z",
+      "items": [
+        {
+          "productId": "prod_fc_102",
+          "name": "Spicy Fried Chicken Meal (3 Pcs)",
+          "quantity": 2,
+          "unitPrice": 95,
+          "total": 190
+        },
+        {
+          "productId": "prod_fc_104",
+          "name": "Garlic Coleslaw Salad",
+          "quantity": 2,
+          "unitPrice": 20,
+          "total": 40
+        },
+        {
+          "productId": "prod_fc_105",
+          "name": "Special Cheddar Sauce",
+          "quantity": 2,
+          "unitPrice": 15,
+          "total": 30
+        }
+      ],
+      "subtotal": 260,
+      "tax": 20.8,
+      "total": 280.8,
+      "paymentMethod": "card",
+      "amountTendered": 280.8,
+      "changeDue": 0
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit_1794767752783_875",
+      "timestamp": "2026-11-15T18:35:52.783Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "USER_LOGOUT",
+      "entityType": "USER",
+      "entityId": "usr_admin",
+      "details": {
+        "email": "admin@wastewise.com"
+      },
+      "ip": "::1"
+    },
+    {
+      "id": "audit_1794767735446_466",
+      "timestamp": "2026-11-15T18:35:35.446Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "usr_admin",
+      "details": {
+        "email": "admin@wastewise.com",
+        "role": "admin"
+      },
+      "ip": "::1"
+    },
+    {
+      "id": "audit_1794767632749_155",
+      "timestamp": "2026-11-15T18:33:52.749Z",
+      "userId": "usr_cashier",
+      "userName": "Karim Zaki (POS Cashier)",
+      "action": "USER_LOGOUT",
+      "entityType": "USER",
+      "entityId": "usr_cashier",
+      "details": {
+        "email": "cashier@wastewise.com"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1794767632732_252",
+      "timestamp": "2026-11-15T18:33:52.732Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "EXPORT_DATABASE_BACKUP",
+      "entityType": "DATABASE",
+      "entityId": null,
+      "details": {
+        "totalProducts": 7,
+        "totalTransactions": 3
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1794767632688_550",
+      "timestamp": "2026-11-15T18:33:52.688Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "MARKDOWN_PRODUCT",
+      "entityType": "PRODUCT",
+      "entityId": "prod_fc_101",
+      "details": {
+        "name": "Crispy Chicken Bucket (12 Pcs)",
+        "discountPercentage": 25,
+        "discountPrice": 187.5
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1794767631944_321",
+      "timestamp": "2026-11-15T18:33:51.944Z",
+      "userId": "usr_cashier",
+      "userName": "Karim Zaki (POS Cashier)",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "usr_cashier",
+      "details": {
+        "email": "cashier@wastewise.com",
+        "role": "cashier"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1794767631846_409",
+      "timestamp": "2026-11-15T18:33:51.846Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "USER_LOGIN",
+      "entityType": "USER",
+      "entityId": "usr_admin",
+      "details": {
+        "email": "admin@wastewise.com",
+        "role": "admin"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_reset_1794767631705",
+      "timestamp": "2026-11-15T18:33:51.705Z",
+      "userId": "usr_admin",
+      "userName": "Tariq Mansour (General Manager)",
+      "action": "RESET_DATABASE",
+      "entityType": "SYSTEM",
+      "entityId": null,
+      "details": {
+        "message": "Database reset to original enterprise mock state."
+      },
+      "ip": "127.0.0.1"
+    }
+  ],
+  "revokedTokens": [
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3Njc2MzEsImV4cCI6MTc5NDgxMDgzMX0.fYBzC6Q73YyL1wYYqWN-jrhpR94cj6OhKYOWQwIKOc0",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9hZG1pbiIsImVtYWlsIjoiYWRtaW5Ad2FzdGV3aXNlLmNvbSIsInJvbGUiOiJhZG1pbiIsIm5hbWUiOiJUYXJpcSBNYW5zb3VyIChHZW5lcmFsIE1hbmFnZXIpIiwiaWF0IjoxNzk0NzY3NzM1LCJleHAiOjE3OTQ4MTA5MzV9.sx5GfgTq-krOlAbzsigYiFm_6Y4wy0bF0dmD9uQMPaY"
+  ],
+  "metadata": {
+    "createdAt": "2026-11-15T18:33:51.706Z",
+    "lastUpdated": "2026-11-15T18:35:52.783Z",
+    "systemDate": "2026-11-15"
+  }
+}

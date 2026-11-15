@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WasteWise AI - Inventory, Expiry Tracking & POS System</title>
+  
+  <!-- Favicon: Official WasteWise AI Logo -->
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="shortcut icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            brand: {
+              DEFAULT: '#10B981',
+              dark: '#059669',
+              light: '#ECFDF5'
+            },
+            warning: {
+              DEFAULT: '#F59E0B',
+              light: '#FEF3C7'
+            },
+            danger: {
+              DEFAULT: '#EF4444',
+              light: '#FEE2E2'
+            },
+            slate: {
+              900: '#0F172A',
+              800: '#1E293B',
+              50: '#F8FAFC'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Custom Styles & Keyframe Animations -->
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen antialiased flex flex-col selection:bg-emerald-500 selection:text-white">
+  
+  <!-- Network Status Banner Mount Point -->
+  <div id="network-banner-container"></div>
+
+  <!-- Navigation Mount Point -->
+  <div id="navbar-root"></div>
+
+  <!-- Main View Mount Point -->
+  <main id="main-root" class="flex-1"></main>
+
+  <!-- Modals & Toasts Mount Points -->
+  <div id="confirm-modal-container"></div>
+  <div id="product-modal-container"></div>
+  <div id="receipt-modal-container"></div>
+  <div id="toast-container"></div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
