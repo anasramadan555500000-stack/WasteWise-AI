@@ -5,6 +5,7 @@ import { formatCurrency, formatDate, formatDateTime, calculateExpiry } from '../
 import { animateCounter, triggerProgressBars } from '../utils/animations.js';
 import { showToast } from './toast.js';
 import { showConfirmModal } from './confirmModal.js';
+import { t, isRTL } from '../utils/i18n.js';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';
 
@@ -13,9 +14,9 @@ function renderInventoryRowsHtml(filteredProducts) {
     return `
       <tr>
         <td colspan="7" class="py-12 text-center text-slate-400">
-          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-          <p class="font-semibold text-slate-600">No matching products found</p>
-          <p class="text-xs text-slate-400 mt-1">Try adjusting your search query or status filter.</p>
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+          <p class="font-semibold text-slate-600 dark:text-slate-300">${t('noMatchingProducts')}</p>
+          <p class="text-xs text-slate-400 mt-1">${t('tryAdjustingSearch')}</p>
         </td>
       </tr>
     `;
@@ -26,14 +27,14 @@ function renderInventoryRowsHtml(filteredProducts) {
     const isPulse = expiry.isPulse;
 
     return `
-      <tr class="hover:bg-slate-50/70 transition-colors ${isPulse ? 'pulse-warning bg-amber-50/30' : ''}">
+      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors ${isPulse ? 'pulse-warning bg-amber-50/30' : ''}">
         
         <!-- Product Info -->
         <td class="py-3.5 px-4">
           <div class="flex items-center gap-3">
-            <img src="${p.image || FALLBACK_IMG}" alt="${p.name}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
+            <img src="${p.image || FALLBACK_IMG}" alt="${p.name}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
             <div>
-              <div class="font-bold text-slate-900 leading-tight">${p.name}</div>
+              <div class="font-bold text-slate-900 dark:text-white leading-tight">${p.name}</div>
               <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
                 <span class="font-mono">${p.sku}</span>
                 <span>•</span>
@@ -45,7 +46,7 @@ function renderInventoryRowsHtml(filteredProducts) {
 
         <!-- Category -->
         <td class="py-3.5 px-4">
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
             ${p.category}
           </span>
         </td>
@@ -53,9 +54,9 @@ function renderInventoryRowsHtml(filteredProducts) {
         <!-- Pricing -->
         <td class="py-3.5 px-4">
           <div>
-            <span class="font-bold text-slate-900">${formatCurrency(p.discountPrice || p.sellingPrice)}</span>
+            <span class="font-bold text-slate-900 dark:text-white">${formatCurrency(p.discountPrice || p.sellingPrice)}</span>
             ${p.discountPrice ? `
-              <span class="text-xs text-slate-400 line-through ml-1">${formatCurrency(p.sellingPrice)}</span>
+              <span class="text-xs text-slate-400 line-through ms-1">${formatCurrency(p.sellingPrice)}</span>
             ` : ''}
           </div>
           <div class="text-xs text-slate-400">Cost: ${formatCurrency(p.costPrice)}</div>
@@ -64,17 +65,17 @@ function renderInventoryRowsHtml(filteredProducts) {
         <!-- Stock Level with Micro-interaction: Progress Bar Fill -->
         <td class="py-3.5 px-4">
           <div class="flex items-center gap-2">
-            <span class="font-bold text-slate-800">${p.stock}</span>
-            <span class="text-xs text-slate-400">units</span>
+            <span class="font-bold text-slate-800 dark:text-slate-200">${p.stock}</span>
+            <span class="text-xs text-slate-400">${t('leftInStock')}</span>
           </div>
-          <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5">
+          <div class="w-24 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5">
             <div class="h-full progress-fill ${p.stock <= p.minStockThreshold ? 'bg-red-500' : 'bg-emerald-500'}" data-target-width="${Math.min(100, (p.stock / 50) * 100)}"></div>
           </div>
         </td>
 
         <!-- Expiry Date & Countdown -->
         <td class="py-3.5 px-4">
-          <div class="text-xs font-medium text-slate-700">${formatDate(p.expiryDate)}</div>
+          <div class="text-xs font-medium text-slate-700 dark:text-slate-300">${formatDate(p.expiryDate)}</div>
           <div class="text-[11px] ${expiry.status === 'expired' ? 'text-red-500 font-bold' : (expiry.status === 'warning' ? 'text-amber-600 font-bold' : 'text-slate-400')}">
             ${expiry.label}
           </div>
@@ -89,17 +90,17 @@ function renderInventoryRowsHtml(filteredProducts) {
         </td>
 
         <!-- Actions -->
-        <td class="py-3.5 px-4 text-right">
+        <td class="py-3.5 px-4 text-end">
           <div class="flex items-center justify-end gap-1.5">
             ${expiry.status === 'warning' ? `
-              <button class="btn-quick-markdown p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" data-id="${p.id}" title="Apply AI Markdown">
+              <button class="btn-quick-markdown p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" data-id="${p.id}" title="${t('aiMarkdownEngine')}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               </button>
             ` : ''}
-            <button class="btn-edit-product p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" data-id="${p.id}" title="Edit Product">
+            <button class="btn-edit-product p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer" data-id="${p.id}" title="${t('edit')}">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
-            <button class="btn-delete-product p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${p.id}" data-name="${p.name}" title="Delete Product">
+            <button class="btn-delete-product p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer" data-id="${p.id}" data-name="${p.name}" title="${t('delete')}">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>
           </div>
@@ -148,6 +149,7 @@ export function renderAdmin(container) {
   const { financials, inventoryOverview, aiMarkdownSuggestions } = effectiveAnalytics;
   const expiringCount = inventoryOverview.expiringSoonCount || 0;
   const expiredCount = inventoryOverview.expiredCount || 0;
+  const rtl = isRTL();
 
   container.innerHTML = `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -161,27 +163,27 @@ export function renderAdmin(container) {
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-900">
-                  ⚠️ Critical Alert: ${expiringCount} product${expiringCount === 1 ? '' : 's'} expiring within 2 days!
+                <span class="text-sm font-bold text-slate-900 dark:text-white">
+                  ⚠️ ${t('criticalAlertHeader')} ${expiringCount} ${t('productsExpiring2d')}
                 </span>
                 ${expiredCount > 0 ? `
                   <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold border border-red-300">
-                    ${expiredCount} Expired
+                    ${expiredCount} ${t('expired')}
                   </span>
                 ` : ''}
               </div>
-              <p class="text-xs text-slate-600 mt-0.5">
-                Total potential inventory loss at risk: <strong class="text-red-600 font-bold">${formatCurrency(financials.wasteLossEstimation)}</strong>. Take proactive markdown action below to salvage capital.
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                ${t('totalAtRiskLoss')} <strong class="text-red-600 font-bold">${formatCurrency(financials.wasteLossEstimation)}</strong>. ${t('takeMarkdownAction')}
               </p>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <button id="btn-filter-expiring" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-1.5">
-              <span>View Expiring Items</span>
+            <button id="btn-filter-expiring" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+              <span>${t('viewExpiringItems')}</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <button id="btn-jump-salvage" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm transition-all">
-              ⚡ AI Markdown Engine
+            <button id="btn-jump-salvage" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm transition-all cursor-pointer">
+              ${t('aiMarkdownEngine')}
             </button>
           </div>
         </div>
@@ -191,42 +193,42 @@ export function renderAdmin(container) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Total Revenue -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 ww-card-shadow ww-card-shadow-hover">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow ww-card-shadow-hover transition-colors">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Gross Sales Revenue</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${t('grossRevenue')}</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900 counter-number" id="counter-revenue" data-target="${financials.totalRevenue}">
+          <div class="text-2xl font-extrabold text-slate-900 dark:text-white counter-number" id="counter-revenue" data-target="${financials.totalRevenue}">
             ${formatCurrency(financials.totalRevenue)}
           </div>
           <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
-            <span>Authoritative from live DB sales</span>
+            <span>${t('liveDbSales')}</span>
           </div>
         </div>
 
         <!-- Net Profit -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 ww-card-shadow ww-card-shadow-hover">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow ww-card-shadow-hover transition-colors">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Net Operating Profit</span>
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${t('netProfit')}</span>
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900 counter-number" id="counter-profit" data-target="${financials.netProfit}">
+          <div class="text-2xl font-extrabold text-slate-900 dark:text-white counter-number" id="counter-profit" data-target="${financials.netProfit}">
             ${formatCurrency(financials.netProfit)}
           </div>
-          <div class="mt-2 flex items-center gap-1.5 text-xs text-indigo-600 font-semibold">
-            <span>${financials.profitMarginPct}% profit margin</span>
+          <div class="mt-2 flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+            <span>${financials.profitMarginPct}% ${t('profitMargin')}</span>
           </div>
         </div>
 
         <!-- Waste Loss Estimation -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 ww-card-shadow ww-card-shadow-hover">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow ww-card-shadow-hover transition-colors">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Waste Loss at Risk</span>
-            <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${t('wasteLoss')}</span>
+            <div class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
           </div>
@@ -234,56 +236,56 @@ export function renderAdmin(container) {
             ${formatCurrency(financials.wasteLossEstimation)}
           </div>
           <div class="mt-2 flex items-center gap-1.5 text-xs text-red-500 font-semibold">
-            <span>${expiredCount} expired • ${expiringCount} at risk</span>
+            <span>${expiredCount} ${t('expired')} • ${expiringCount} ${t('warning')}</span>
           </div>
         </div>
 
         <!-- Inventory Value -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 ww-card-shadow ww-card-shadow-hover">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow ww-card-shadow-hover transition-colors">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Inventory Cost</span>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${t('inventoryCost')}</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             </div>
           </div>
-          <div class="text-2xl font-extrabold text-slate-900 counter-number" id="counter-inventory-val" data-target="${financials.totalInventoryValue}">
+          <div class="text-2xl font-extrabold text-slate-900 dark:text-white counter-number" id="counter-inventory-val" data-target="${financials.totalInventoryValue}">
             ${formatCurrency(financials.totalInventoryValue)}
           </div>
-          <div class="mt-2 flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
-            <span>${inventoryOverview.totalStockUnits} total stock units</span>
+          <div class="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>${inventoryOverview.totalStockUnits} ${t('totalStockUnits')}</span>
           </div>
         </div>
 
       </div>
 
       <!-- 3. Navigation Tabs & Tools -->
-      <div class="border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <nav class="flex space-x-6 text-sm font-semibold overflow-x-auto pb-1 sm:pb-0">
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'inventory' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="inventory">
-            📦 Inventory & Expiry Tracker
+      <div class="border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <nav class="flex space-x-6 rtl:space-x-reverse text-sm font-semibold overflow-x-auto pb-1 sm:pb-0">
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'inventory' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="inventory">
+            ${t('tabInventory')}
           </button>
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'markdown' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="markdown">
-            🤖 AI Wastage & Salvage Engine
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'markdown' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="markdown">
+            ${t('tabMarkdown')}
           </button>
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'users' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="users">
-            🛡️ RBAC Users & Security
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'users' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="users">
+            ${t('tabUsers')}
           </button>
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'transactions' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="transactions">
-            🧾 Sales Invoices
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'transactions' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="transactions">
+            ${t('tabTransactions')}
           </button>
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'auditLogs' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="auditLogs">
-            📜 Enterprise Audit Logs
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'auditLogs' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="auditLogs">
+            ${t('tabAuditLogs')}
           </button>
-          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-900'}" data-tab="settings">
-            ⚙️ System Settings
+          <button class="tab-btn pb-3 border-b-2 transition-all whitespace-nowrap cursor-pointer ${activeTab === 'settings' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}" data-tab="settings">
+            ${t('tabSettings')}
           </button>
         </nav>
 
         <!-- Right Side Tools: Export Database -->
         <div class="flex items-center gap-2 pb-2 sm:pb-0">
-          <button id="btn-export-backup" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-sm transition-all flex items-center gap-1.5" title="Export full JSON backup">
+          <button id="btn-export-backup" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer" title="Export full JSON backup">
             <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            <span>Export Backup</span>
+            <span>${t('exportBackup')}</span>
           </button>
         </div>
       </div>
@@ -293,10 +295,74 @@ export function renderAdmin(container) {
         <div class="space-y-4">
           
           <!-- Filters & Action Bar -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 ww-card-shadow flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 transition-colors">
             
             <!-- Search Input with Live Instant Search & Clear Button -->
             <div class="relative flex-1 max-w-md">
+              <div class="absolute inset-y-0 ${rtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <input type="text" id="admin-search-input" value="${filters.search || ''}"
+                placeholder="${t('searchAdminPlaceholder')}"
+                class="w-full ${rtl ? 'pr-9 pl-9' : 'pl-9 pr-9'} py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-900 dark:text-white" />
+              <button type="button" id="admin-btn-clear-search" class="absolute inset-y-0 ${rtl ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ${filters.search ? '' : 'hidden'}" title="Clear search">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+              <!-- Expiry Status Filter -->
+              <select id="admin-status-filter" class="py-2 px-3 text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+                <option value="all" ${filters.status === 'all' ? 'selected' : ''}>${t('allExpiryStatuses')}</option>
+                <option value="warning" ${filters.status === 'warning' ? 'selected' : ''}>${t('expiringIn2Days')}</option>
+                <option value="expired" ${filters.status === 'expired' ? 'selected' : ''}>${t('expiredItems')}</option>
+                <option value="safe" ${filters.status === 'safe' ? 'selected' : ''}>${t('safeItems')}</option>
+              </select>
+
+              <!-- Category Filter -->
+              <select id="admin-category-filter" class="py-2 px-3 text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+                <option value="All" ${filters.category === 'All' ? 'selected' : ''}>${t('catAll')}</option>
+                <option value="Buckets" ${filters.category === 'Buckets' ? 'selected' : ''}>${t('catBuckets')}</option>
+                <option value="Meals" ${filters.category === 'Meals' ? 'selected' : ''}>${t('catMeals')}</option>
+                <option value="Sides" ${filters.category === 'Sides' ? 'selected' : ''}>${t('catSides')}</option>
+                <option value="Sauces" ${filters.category === 'Sauces' ? 'selected' : ''}>${t('catSauces')}</option>
+                <option value="Drinks" ${filters.category === 'Drinks' ? 'selected' : ''}>${t('catDrinks')}</option>
+              </select>
+
+              <!-- Add Product Button -->
+              <button id="btn-add-product" class="py-2 px-4 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span>${t('addProduct')}</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Inventory Table Container -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow overflow-hidden transition-colors">
+            <div class="overflow-x-auto">
+              <table class="w-full text-start border-collapse">
+                <thead>
+                  <tr class="bg-slate-50/75 dark:bg-slate-800/75 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th class="py-3.5 px-4">${t('thProductSku')}</th>
+                    <th class="py-3.5 px-4">${t('thCategory')}</th>
+                    <th class="py-3.5 px-4">${t('thCostRetail')}</th>
+                    <th class="py-3.5 px-4">${t('thStockLevel')}</th>
+                    <th class="py-3.5 px-4">${t('thExpiryDate')}</th>
+                    <th class="py-3.5 px-4">${t('thLiveStatus')}</th>
+                    <th class="py-3.5 px-4 text-end">${t('thActions')}</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-inventory-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                  ${renderInventoryRowsHtml(filteredProducts)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      ` : ''}
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </div>
@@ -563,72 +629,72 @@ export function renderAdmin(container) {
         <div class="space-y-6">
           
           <!-- Settings Top Bar with Save Button -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-2xl bg-white border border-slate-200 ww-card-shadow">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ww-card-shadow transition-colors">
             <div>
-              <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <span>⚙️ Restaurant POS & System Configuration</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Admin Only</span>
+              <h2 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>${t('settingsTitle')}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">${t('adminOnlyBadge')}</span>
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">Customize receipt branding, financial rules, AI expiry triggers, and backup data.</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${t('settingsSubtitle')}</p>
             </div>
-            <button id="btn-save-settings" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 shrink-0">
+            <button id="btn-save-settings" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Save System Settings</span>
+              <span>${t('saveSettingsBtn')}</span>
             </button>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             <!-- Card 1: Restaurant & Receipt Branding -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 ww-card-shadow space-y-4">
-              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ww-card-shadow space-y-4 transition-colors">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                   🏬
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Restaurant & Receipt Branding</h3>
-                  <p class="text-[11px] text-slate-400">Printed dynamically on invoices, customer receipts, and navbar.</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">${t('brandingCardTitle')}</h3>
+                  <p class="text-[11px] text-slate-400">${t('brandingCardSub')}</p>
                 </div>
               </div>
 
               <div class="space-y-3">
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Restaurant / Brand Name</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('restaurantName')}</label>
                   <input type="text" id="setting-restaurant-name" value="${settings?.restaurantName || 'WasteWise AI • Fried Chicken Express'}"
-                    class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium" />
+                    class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900 dark:text-white" />
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Branch Name</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('branchName')}</label>
                     <input type="text" id="setting-branch-name" value="${settings?.branchName || 'Main Branch - Downtown Cairo'}"
-                      class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium" />
+                      class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900 dark:text-white" />
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('phone')}</label>
                     <input type="text" id="setting-phone" value="${settings?.phone || '+20 100 123 4567'}"
-                      class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium" />
+                      class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900 dark:text-white font-mono" />
                   </div>
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Address</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('address')}</label>
                   <input type="text" id="setting-address" value="${settings?.address || '15 El-Tahrir Square, Downtown, Cairo, Egypt'}"
-                    class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium" />
+                    class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900 dark:text-white" />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Receipt Footer Note</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('receiptFooter')}</label>
                   <textarea id="setting-receipt-footer" rows="2"
-                    class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">${settings?.receiptFooter || 'Thank you for choosing WasteWise AI! Quality fried chicken, zero food waste.'}</textarea>
+                    class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-900 dark:text-white">${settings?.receiptFooter || 'Thank you for choosing WasteWise AI! Quality fried chicken, zero food waste.'}</textarea>
                 </div>
 
                 <!-- Live Receipt Preview Box -->
-                <div class="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-center font-mono text-[11px] text-slate-600 space-y-1">
-                  <div class="font-bold text-slate-900" id="preview-receipt-name">${settings?.restaurantName || 'WasteWise AI • Fried Chicken Express'}</div>
-                  <div class="text-[10px] text-slate-500" id="preview-receipt-address">${settings?.address || '15 El-Tahrir Square, Downtown, Cairo'}</div>
-                  <div class="text-[10px] text-slate-500" id="preview-receipt-phone">Tel: ${settings?.phone || '+20 100 123 4567'}</div>
-                  <div class="border-t border-slate-200 pt-1 text-[10px] text-emerald-600 italic" id="preview-receipt-footer">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center font-mono text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                  <div class="font-bold text-slate-900 dark:text-white" id="preview-receipt-name">${settings?.restaurantName || 'WasteWise AI • Fried Chicken Express'}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400" id="preview-receipt-address">${settings?.address || '15 El-Tahrir Square, Downtown, Cairo'}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400" id="preview-receipt-phone">Tel: ${settings?.phone || '+20 100 123 4567'}</div>
+                  <div class="border-t border-slate-200 dark:border-slate-700 pt-1 text-[10px] text-emerald-600 dark:text-emerald-400 italic" id="preview-receipt-footer">
                     "${settings?.receiptFooter || 'Thank you for choosing WasteWise AI!'}"
                   </div>
                 </div>
@@ -636,51 +702,51 @@ export function renderAdmin(container) {
             </div>
 
             <!-- Card 2: Financial & Tax Rules -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 ww-card-shadow space-y-4">
-              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ww-card-shadow space-y-4 transition-colors">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                   💵
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Financial & Tax Rules</h3>
-                  <p class="text-[11px] text-slate-400">Controls VAT percentage, currency display, and enabled tenders.</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">${t('financialCardTitle')}</h3>
+                  <p class="text-[11px] text-slate-400">${t('financialCardSub')}</p>
                 </div>
               </div>
 
               <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Currency Code</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('currencyCode')}</label>
                     <input type="text" id="setting-currency" value="${settings?.currency || 'EGP'}"
-                      class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold uppercase" />
+                      class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold uppercase text-slate-900 dark:text-white" />
                     <p class="text-[10px] text-slate-400 mt-1">Default: EGP (Egyptian Pound)</p>
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Sales Tax / VAT (%)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('salesTaxPct')}</label>
                     <div class="relative">
                       <input type="number" id="setting-tax-rate" step="0.5" min="0" max="50" value="${((settings?.taxRate !== undefined ? settings.taxRate : 0.08) * 100).toFixed(1)}"
-                        class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" />
-                      <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 pointer-events-none">%</span>
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-white" />
+                      <span class="absolute inset-y-0 ${rtl ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-xs text-slate-400 pointer-events-none">%</span>
                     </div>
                     <p class="text-[10px] text-slate-400 mt-1">Dynamically applies to POS cart totals.</p>
                   </div>
                 </div>
 
                 <!-- Enabled Payment Methods Toggles -->
-                <div class="pt-2 border-t border-slate-100 space-y-2">
-                  <label class="block text-xs font-bold text-slate-700">Enabled Checkout Payment Methods</label>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">${t('enabledTenders')}</label>
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors">
                       <input type="checkbox" id="setting-pay-cash" ${settings?.enabledPaymentMethods?.cash !== false ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" />
-                      <span class="text-xs font-bold text-slate-800">Cash</span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${t('cash')}</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors">
                       <input type="checkbox" id="setting-pay-card" ${settings?.enabledPaymentMethods?.card !== false ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" />
-                      <span class="text-xs font-bold text-slate-800">Visa / Card</span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${t('card')}</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors">
                       <input type="checkbox" id="setting-pay-wallet" ${settings?.enabledPaymentMethods?.wallet !== false ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" />
-                      <span class="text-xs font-bold text-slate-800">Wallet</span>
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${t('wallet')}</span>
                     </label>
                   </div>
                 </div>
@@ -688,46 +754,46 @@ export function renderAdmin(container) {
             </div>
 
             <!-- Card 3: Inventory & AI Expiry Thresholds -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 ww-card-shadow space-y-4">
-              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ww-card-shadow space-y-4 transition-colors">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
                   🛡️
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Inventory & AI Expiry Thresholds</h3>
-                  <p class="text-[11px] text-slate-400">Configures warning badges, bell notifications, and POS checkout blocks.</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">${t('thresholdsCardTitle')}</h3>
+                  <p class="text-[11px] text-slate-400">${t('thresholdsCardSub')}</p>
                 </div>
               </div>
 
               <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Warning Window (Days)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('warningWindowDays')}</label>
                     <input type="number" id="setting-warning-days" min="1" max="14" value="${settings?.warningDaysBefore || 2}"
-                      class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" />
+                      class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-white" />
                     <p class="text-[10px] text-slate-400 mt-1">Amber alert trigger (Default: 2 days).</p>
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Critical Expiry (Days)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('criticalThresholdDays')}</label>
                     <input type="number" id="setting-critical-days" min="0" max="7" value="${settings?.criticalDaysBefore !== undefined ? settings.criticalDaysBefore : 1}"
-                      class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" />
+                      class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-white" />
                     <p class="text-[10px] text-slate-400 mt-1">Red alert trigger (Default: 1 day).</p>
                   </div>
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Default Low-Stock Threshold</label>
+                  <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">${t('minStockThreshold')}</label>
                   <input type="number" id="setting-min-stock" min="1" max="200" value="${settings?.defaultMinStockThreshold || 15}"
-                    class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold" />
+                    class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-white" />
                   <p class="text-[10px] text-slate-400 mt-1">Triggers low-stock alerts in the top notification bell.</p>
                 </div>
 
-                <div class="pt-2 border-t border-slate-100">
-                  <label class="flex items-center gap-3 p-3 rounded-xl border border-red-200 bg-red-50/40 cursor-pointer">
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <label class="flex items-center gap-3 p-3 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 cursor-pointer">
                     <input type="checkbox" id="setting-auto-block-expired" ${settings?.autoBlockExpiredCheckout !== false ? 'checked' : ''} class="w-4 h-4 text-red-600 rounded focus:ring-red-500" />
                     <div>
-                      <div class="text-xs font-bold text-red-900">Auto-Block Expired Items at POS Checkout</div>
-                      <div class="text-[11px] text-red-700">Strictly prevents cashiers from billing any product that has already expired.</div>
+                      <div class="text-xs font-bold text-red-900 dark:text-red-300">${t('autoBlockExpired')}</div>
+                      <div class="text-[11px] text-red-700 dark:text-red-400">${t('autoBlockExpiredSub')}</div>
                     </div>
                   </label>
                 </div>
@@ -735,40 +801,40 @@ export function renderAdmin(container) {
             </div>
 
             <!-- Card 4: System Maintenance & Data Management -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 ww-card-shadow space-y-4">
-              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 ww-card-shadow space-y-4 transition-colors">
+              <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
                   💾
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">System Maintenance & Database</h3>
-                  <p class="text-[11px] text-slate-400">Database backup exports and mock demonstration data management.</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">${t('maintenanceCardTitle')}</h3>
+                  <p class="text-[11px] text-slate-400">${t('maintenanceCardSub')}</p>
                 </div>
               </div>
 
               <div class="space-y-4">
-                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 space-y-2">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h4 class="text-xs font-bold text-slate-900">Full Enterprise Database Backup</h4>
-                      <p class="text-[11px] text-slate-500">Download all products, transactions, and settings in JSON format.</p>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white">${t('fullDbBackup')}</h4>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400">${t('fullDbBackupSub')}</p>
                     </div>
-                    <button type="button" id="btn-settings-export-backup" class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0">
+                    <button type="button" id="btn-settings-export-backup" class="px-3.5 py-2 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
                       <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                      <span>Download JSON</span>
+                      <span>${t('downloadJson')}</span>
                     </button>
                   </div>
                 </div>
 
-                <div class="p-4 rounded-xl border border-red-200 bg-red-50/30 space-y-2">
+                <div class="p-4 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/30 dark:bg-red-950/30 space-y-2">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h4 class="text-xs font-bold text-red-900">Reset Demo Database</h4>
-                      <p class="text-[11px] text-red-700">Restore factory demonstration catalog (Fried Chicken meals & sides).</p>
+                      <h4 class="text-xs font-bold text-red-900 dark:text-red-300">${t('resetDemoDb')}</h4>
+                      <p class="text-[11px] text-red-700 dark:text-red-400">${t('resetDemoDbSub')}</p>
                     </div>
-                    <button type="button" id="btn-settings-reset-demo" class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0">
+                    <button type="button" id="btn-settings-reset-demo" class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                      <span>Reset Demo</span>
+                      <span>${t('resetDemo')}</span>
                     </button>
                   </div>
                 </div>

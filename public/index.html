@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,19 +10,43 @@
   <link rel="shortcut icon" type="image/png" href="/logo.png" />
   <link rel="apple-touch-icon" href="/logo.png" />
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Plus Jakarta Sans, Cairo (Arabic), JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <!-- Pre-render Theme & Language Initialization (Prevents FOUC) -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('wastewise_theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+
+        var savedLang = localStorage.getItem('wastewise_lang') || 'en';
+        document.documentElement.lang = savedLang;
+        document.documentElement.dir = savedLang === 'ar' ? 'rtl' : 'ltr';
+        if (savedLang === 'ar') {
+          document.documentElement.classList.add('lang-ar');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'Cairo', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            arabic: ['Cairo', '"Plus Jakarta Sans"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace']
           },
           colors: {
@@ -40,8 +64,17 @@
               light: '#FEE2E2'
             },
             slate: {
+              950: '#0B1120',
               900: '#0F172A',
+              850: '#151F32',
               800: '#1E293B',
+              700: '#334155',
+              600: '#475569',
+              500: '#64748B',
+              400: '#94A3B8',
+              300: '#CBD5E1',
+              200: '#E2E8F0',
+              100: '#F1F5F9',
               50: '#F8FAFC'
             }
           }
@@ -50,10 +83,10 @@
     };
   </script>
 
-  <!-- Custom Styles & Keyframe Animations -->
+  <!-- Custom Styles, Dark Mode Overrides & Animations -->
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
-<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen antialiased flex flex-col selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 min-h-screen antialiased flex flex-col selection:bg-emerald-500 selection:text-white transition-colors duration-200">
   
   <!-- Network Status Banner Mount Point -->
   <div id="network-banner-container"></div>
@@ -68,6 +101,7 @@
   <div id="confirm-modal-container"></div>
   <div id="product-modal-container"></div>
   <div id="receipt-modal-container"></div>
+  <div id="profile-modal-container"></div>
   <div id="toast-container"></div>
 
   <!-- Application Bootstrap -->

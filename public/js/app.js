@@ -56,6 +56,14 @@ class App {
       showToast('Session expired or revoked. Please sign in again.', 'warning');
     });
 
+    window.addEventListener('wastewise:langChange', () => {
+      this.render();
+    });
+
+    window.addEventListener('wastewise:themeChange', () => {
+      this.render();
+    });
+
     // Check if user session already exists
     const token = api.getToken();
     const currentUser = store.getState().user;

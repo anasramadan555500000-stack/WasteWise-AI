@@ -3,16 +3,17 @@ import { store } from '../state.js';
 import { api } from '../api.js';
 import { formatCurrency, calculateExpiry } from '../utils/formatters.js';
 import { showToast } from './toast.js';
+import { t, isRTL } from '../utils/i18n.js';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';
 
 function renderProductGridHtml(filteredProducts) {
   if (filteredProducts.length === 0) {
     return `
-      <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-        <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-        <p class="font-bold text-slate-700">No items found</p>
-        <p class="text-xs text-slate-400">Try clearing the search filter or scanning a different barcode.</p>
+      <div class="col-span-full py-16 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <svg class="w-12 h-12 mx-auto mb-2 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <p class="font-bold text-slate-700 dark:text-slate-300">${t('noItemsFound')}</p>
+        <p class="text-xs text-slate-400">${t('tryClearingFilter')}</p>
       </div>
     `;
   }
@@ -24,17 +25,17 @@ function renderProductGridHtml(filteredProducts) {
     const effectivePrice = p.discountPrice !== null ? p.discountPrice : p.sellingPrice;
 
     return `
-      <div class="pos-product-card bg-white rounded-2xl border border-slate-200 p-3 ww-card-shadow ww-card-shadow-hover flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group ${isPulse ? 'pulse-warning bg-amber-50/20' : ''} ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}"
+      <div class="pos-product-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 ww-card-shadow ww-card-shadow-hover flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group ${isPulse ? 'pulse-warning bg-amber-50/20' : ''} ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}"
         data-id="${p.id}">
         
         <!-- Top Image & Expiry Tag -->
-        <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2.5">
+        <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2.5">
           <img src="${p.image || FALLBACK_IMG}" alt="${p.name}"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
           
           <!-- Expiry Badge -->
-          <div class="absolute top-2 left-2">
+          <div class="absolute top-2 start-2">
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${expiry.badgeClass}">
               ${expiry.label}
             </span>
@@ -42,7 +43,7 @@ function renderProductGridHtml(filteredProducts) {
 
           <!-- Discount Badge -->
           ${p.discountPrice ? `
-            <div class="absolute top-2 right-2">
+            <div class="absolute top-2 end-2">
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-sm">
                 SALE
               </span>
@@ -53,22 +54,22 @@ function renderProductGridHtml(filteredProducts) {
         <!-- Name & Category -->
         <div class="space-y-1">
           <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">${p.category}</div>
-          <div class="text-xs font-bold text-slate-900 line-clamp-1 leading-snug" title="${p.name}">${p.name}</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 leading-snug" title="${p.name}">${p.name}</div>
         </div>
 
         <!-- Price & Stock Foot -->
-        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+        <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <div class="text-sm font-extrabold text-slate-900">${formatCurrency(effectivePrice)}</div>
+            <div class="text-sm font-extrabold text-slate-900 dark:text-white">${formatCurrency(effectivePrice)}</div>
             ${p.discountPrice ? `
               <div class="text-[10px] text-slate-400 line-through">${formatCurrency(p.sellingPrice)}</div>
             ` : ''}
           </div>
 
           <!-- Stock Counter Tag -->
-          <div class="text-right">
-            <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600'}">
-              ${p.stock} left
+          <div class="text-end">
+            <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}">
+              ${p.stock} ${t('leftInStock')}
             </span>
             <div class="text-[9px] text-slate-400 font-mono">${p.sku}</div>
           </div>
@@ -80,7 +81,6 @@ function renderProductGridHtml(filteredProducts) {
 }
 
 export function renderCashier(container) {
-  // Capture focus before re-render
   const activeEl = document.activeElement;
   const wasSearchFocused = activeEl && activeEl.id === 'pos-search-input';
   const selStart = wasSearchFocused ? activeEl.selectionStart : null;
@@ -91,6 +91,16 @@ export function renderCashier(container) {
   const cartSummary = store.getCartSummary();
   const taxPct = ((settings?.taxRate !== undefined ? settings.taxRate : 0.08) * 100).toFixed(0);
   const enabledPayments = settings?.enabledPaymentMethods || { cash: true, card: true, wallet: true };
+  const rtl = isRTL();
+
+  const categoryPills = [
+    { key: 'All', label: t('catAll') },
+    { key: 'Buckets', label: t('catBuckets') },
+    { key: 'Meals', label: t('catMeals') },
+    { key: 'Sides', label: t('catSides') },
+    { key: 'Sauces', label: t('catSauces') },
+    { key: 'Drinks', label: t('catDrinks') }
+  ];
 
   container.innerHTML = `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -100,25 +110,25 @@ export function renderCashier(container) {
         <div class="lg:col-span-7 xl:col-span-8 space-y-4">
           
           <!-- Search & Category Filters Bar -->
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 ww-card-shadow space-y-3">
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow space-y-3 transition-colors">
             <!-- Search Bar with Live Instant Filter & Barcode Scanner -->
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div class="absolute inset-y-0 ${rtl ? 'right-0 pr-3.5' : 'left-0 pl-3.5'} flex items-center pointer-events-none text-slate-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </div>
               <input type="text" id="pos-search-input" value="${filters.search || ''}"
-                placeholder="Search food by name, SKU, or scan barcode (Press Enter to quick-add)..."
-                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium" />
-              <button type="button" id="pos-btn-clear-search" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors ${filters.search ? '' : 'hidden'}" title="Clear search">
+                placeholder="${t('searchPosPlaceholder')}"
+                class="w-full ${rtl ? 'pr-10 pl-10' : 'pl-10 pr-10'} py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-slate-900 dark:text-white" />
+              <button type="button" id="pos-btn-clear-search" class="absolute inset-y-0 ${rtl ? 'left-0 pl-3.5' : 'right-0 pr-3.5'} flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ${filters.search ? '' : 'hidden'}" title="Clear search">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
 
             <!-- Category Filter Pills -->
             <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              ${['All', 'Buckets', 'Meals', 'Sides', 'Sauces', 'Drinks'].map(cat => `
-                <button class="pos-category-btn px-3 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${filters.category === cat ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}" data-category="${cat}">
-                  ${cat}
+              ${categoryPills.map(cat => `
+                <button class="pos-category-btn px-3 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${filters.category === cat.key ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}" data-category="${cat.key}">
+                  ${cat.label}
                 </button>
               `).join('')}
             </div>
@@ -133,23 +143,23 @@ export function renderCashier(container) {
 
         <!-- Right: Active Invoice Bill Sidebar (4-5 Cols) -->
         <div class="lg:col-span-5 xl:col-span-4 sticky top-20">
-          <div class="bg-white rounded-2xl border border-slate-200 ww-card-shadow p-5 space-y-4">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow p-5 space-y-4 transition-colors">
             
             <!-- Bill Header -->
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
                 <div>
-                  <h2 class="text-sm font-bold text-slate-900">Current Order Bill</h2>
-                  <p class="text-[11px] text-slate-400">${cartSummary.totalItems} item${cartSummary.totalItems === 1 ? '' : 's'} in cart</p>
+                  <h2 class="text-sm font-bold text-slate-900 dark:text-white">${t('currentOrderBill')}</h2>
+                  <p class="text-[11px] text-slate-400">${cartSummary.totalItems} ${t('itemsInCart')}</p>
                 </div>
               </div>
 
               ${cart.length > 0 ? `
-                <button id="pos-btn-clear-cart" class="text-xs text-red-500 hover:text-red-700 font-semibold p-1 hover:bg-red-50 rounded-lg transition-colors">
-                  Clear All
+                <button id="pos-btn-clear-cart" class="text-xs text-red-500 hover:text-red-700 font-semibold p-1 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer">
+                  ${t('clearAll')}
                 </button>
               ` : ''}
             </div>
@@ -158,9 +168,9 @@ export function renderCashier(container) {
             <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
               ${cart.length === 0 ? `
                 <div class="py-12 text-center text-slate-400">
-                  <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <p class="text-xs font-semibold text-slate-600">Cart is empty</p>
-                  <p class="text-[11px] text-slate-400 mt-0.5">Click any product or scan barcode to add.</p>
+                  <svg class="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">${t('cartEmpty')}</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${t('cartEmptySub')}</p>
                 </div>
               ` : cart.map(item => {
                 const p = item.product;
@@ -168,33 +178,33 @@ export function renderCashier(container) {
                 const itemTotal = Number((price * item.quantity).toFixed(2));
 
                 return `
-                  <div class="cart-item-row p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 ${item.isNew ? 'cart-item-slide-in' : ''}">
+                  <div class="cart-item-row p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 ${item.isNew ? 'cart-item-slide-in' : ''}">
                     <!-- Thumbnail & Info -->
                     <div class="flex items-center gap-2.5 min-w-0">
-                      <img src="${p.image || FALLBACK_IMG}" alt="${p.name}" class="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-200" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
+                      <img src="${p.image || FALLBACK_IMG}" alt="${p.name}" class="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-200 dark:border-slate-700" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
                       <div class="min-w-0">
-                        <div class="text-xs font-bold text-slate-900 truncate">${p.name}</div>
-                        <div class="text-[11px] text-slate-400 font-semibold">${formatCurrency(price)} each</div>
+                        <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${p.name}</div>
+                        <div class="text-[11px] text-slate-400 font-semibold">${formatCurrency(price)}</div>
                       </div>
                     </div>
 
                     <!-- Quantity Controls -->
                     <div class="flex items-center gap-1.5 shrink-0">
-                      <div class="flex items-center bg-white border border-slate-200 rounded-lg p-0.5">
-                        <button class="cart-btn-decrement w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100 transition-colors" data-id="${p.id}">
+                      <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5">
+                        <button class="cart-btn-decrement w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-id="${p.id}">
                           -
                         </button>
-                        <span class="w-7 text-center text-xs font-bold text-slate-900">${item.quantity}</span>
-                        <button class="cart-btn-increment w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100 transition-colors" data-id="${p.id}">
+                        <span class="w-7 text-center text-xs font-bold text-slate-900 dark:text-white">${item.quantity}</span>
+                        <button class="cart-btn-increment w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-id="${p.id}">
                           +
                         </button>
                       </div>
 
-                      <div class="w-16 text-right font-bold text-xs text-slate-900">
+                      <div class="w-16 text-end font-bold text-xs text-slate-900 dark:text-white">
                         ${formatCurrency(itemTotal)}
                       </div>
 
-                      <button class="cart-btn-remove text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors" data-id="${p.id}" title="Remove">
+                      <button class="cart-btn-remove text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors" data-id="${p.id}" title="${t('delete')}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                       </button>
                     </div>
@@ -204,43 +214,43 @@ export function renderCashier(container) {
             </div>
 
             <!-- Financial Calculation Summary -->
-            <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
-              <div class="flex justify-between text-slate-500">
-                <span>Subtotal:</span>
-                <span class="font-semibold text-slate-800">${formatCurrency(cartSummary.subtotal)}</span>
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+              <div class="flex justify-between text-slate-500 dark:text-slate-400">
+                <span>${t('subtotal')}</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200">${formatCurrency(cartSummary.subtotal)}</span>
               </div>
-              <div class="flex justify-between text-slate-500">
-                <span>Sales Tax (${taxPct}%):</span>
-                <span class="font-semibold text-slate-800">${formatCurrency(cartSummary.tax)}</span>
+              <div class="flex justify-between text-slate-500 dark:text-slate-400">
+                <span>${t('salesTax')} (${taxPct}%):</span>
+                <span class="font-semibold text-slate-800 dark:text-slate-200">${formatCurrency(cartSummary.tax)}</span>
               </div>
-              <div class="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
-                <span>Total Amount Due:</span>
-                <span class="text-emerald-600">${formatCurrency(cartSummary.total)}</span>
+              <div class="flex justify-between text-base font-extrabold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span>${t('totalDue')}</span>
+                <span class="text-emerald-500">${formatCurrency(cartSummary.total)}</span>
               </div>
             </div>
 
             <!-- Payment Tender Selection -->
-            <div class="pt-2 border-t border-slate-100 space-y-3">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Payment Method Options</label>
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">${t('paymentOptions')}</label>
               <div class="grid grid-cols-3 gap-1.5">
                 ${enabledPayments.cash !== false ? `
-                  <button type="button" id="tender-cash-btn" class="py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 border-emerald-500 text-emerald-800">
-                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span>Cash</span>
+                  <button type="button" id="tender-cash-btn" class="py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300">
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>${t('cash')}</span>
                   </button>
                 ` : ''}
 
                 ${enabledPayments.card !== false ? `
-                  <button type="button" id="tender-card-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                    <span>Visa / Card</span>
+                  <button type="button" id="tender-card-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1">
+                    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <span>${t('card')}</span>
                   </button>
                 ` : ''}
 
                 ${enabledPayments.wallet !== false ? `
-                  <button type="button" id="tender-wallet-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    <span>Wallet</span>
+                  <button type="button" id="tender-wallet-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1">
+                    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span>${t('wallet')}</span>
                   </button>
                 ` : ''}
               </div>
@@ -248,58 +258,58 @@ export function renderCashier(container) {
               <!-- Quick Cash Tender Controls -->
               <div id="cash-tender-controls" class="space-y-2">
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-slate-500 font-medium shrink-0">Tendered (EGP):</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0">${t('tendered')}</span>
                   <input type="number" id="tender-amount-input" step="1" min="${cartSummary.total}" value="${cartSummary.total > 0 ? cartSummary.total : 0}"
-                    class="w-full py-1.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                    class="w-full py-1.5 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                 </div>
                 
                 <div class="grid grid-cols-4 gap-1.5">
-                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700" data-val="${cartSummary.total}">
-                    Exact
+                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer" data-val="${cartSummary.total}">
+                    ${t('exact')}
                   </button>
-                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700" data-val="100">
-                    100 EGP
+                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer" data-val="100">
+                    100
                   </button>
-                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700" data-val="200">
-                    200 EGP
+                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer" data-val="200">
+                    200
                   </button>
-                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700" data-val="500">
-                    500 EGP
+                  <button type="button" class="btn-quick-cash py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer" data-val="500">
+                    500
                   </button>
                 </div>
 
-                <div class="flex justify-between items-center text-xs p-2 rounded-lg bg-slate-50 border border-slate-200">
-                  <span class="text-slate-500">Change Due:</span>
-                  <span id="pos-change-due" class="font-bold text-emerald-600 text-sm">0.00 EGP</span>
+                <div class="flex justify-between items-center text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <span class="text-slate-500 dark:text-slate-400">${t('changeDue')}</span>
+                  <span id="pos-change-due" class="font-bold text-emerald-500 text-sm">0.00 EGP</span>
                 </div>
               </div>
 
               <!-- Visa / Card Tender Controls -->
-              <div id="card-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div class="flex items-center gap-2 text-indigo-700 font-semibold">
+              <div id="card-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-semibold">
                   <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                  <span>POS Terminal Tap / EMV Chip Active</span>
+                  <span>${t('posTapActive')}</span>
                 </div>
-                <input type="text" id="card-reference-input" placeholder="Auth / Reference Code (e.g. VISA-8842)"
-                  class="w-full py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" value="VISA-${Math.floor(1000 + Math.random() * 9000)}" />
+                <input type="text" id="card-reference-input" placeholder="${t('authRefCode')}"
+                  class="w-full py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white font-mono" value="VISA-${Math.floor(1000 + Math.random() * 9000)}" />
               </div>
 
               <!-- Mobile Wallet Controls -->
-              <div id="wallet-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div class="flex items-center gap-2 text-emerald-700 font-semibold">
+              <div id="wallet-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Vodafone Cash / InstaPay Transfer</span>
+                  <span>${t('walletTransferActive')}</span>
                 </div>
-                <input type="text" id="wallet-phone-input" placeholder="Wallet Phone / InstaPay Ref (e.g. 01023456789)"
-                  class="w-full py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" value="01098765432" />
+                <input type="text" id="wallet-phone-input" placeholder="${t('walletPhoneInput')}"
+                  class="w-full py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white font-mono" value="01098765432" />
               </div>
             </div>
 
             <!-- Complete Order Action Button -->
             <button id="pos-btn-checkout" ${cart.length === 0 ? 'disabled' : ''}
-              class="w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] text-white text-sm font-extrabold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2">
+              class="w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] text-white text-sm font-extrabold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Complete Order / Checkout</span>
+              <span>${t('completeOrder')}</span>
             </button>
 
           </div>
@@ -408,12 +418,10 @@ export function renderCashier(container) {
   }
 
   if (searchInput) {
-    // Instant live search without losing focus
     searchInput.addEventListener('input', (e) => {
       updateGridDirectly(e.target.value);
     });
 
-    // Barcode scanner Enter key listener
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -430,7 +438,7 @@ export function renderCashier(container) {
         if (match) {
           try {
             store.addToCart(match, 1);
-            showToast(`Scanned & added: ${match.name}`, 'success');
+            showToast(`${t('scannedAdded')} ${match.name}`, 'success');
             searchInput.value = '';
             updateGridDirectly('');
             searchInput.focus();
@@ -438,13 +446,12 @@ export function renderCashier(container) {
             showToast(err.message, 'warning');
           }
         } else {
-          showToast(`No item matching barcode/SKU: "${val}"`, 'warning');
+          showToast(`${t('noItemBarcodeMatch')} "${val}"`, 'warning');
         }
       }
     });
   }
 
-  // Clear search button click
   if (clearSearchBtn && searchInput) {
     clearSearchBtn.addEventListener('click', () => {
       searchInput.value = '';
@@ -453,7 +460,6 @@ export function renderCashier(container) {
     });
   }
 
-  // Restore search input focus if previously focused before re-render
   if (wasSearchFocused && searchInput) {
     searchInput.focus();
     if (selStart !== null && selEnd !== null) {
@@ -483,8 +489,8 @@ export function renderCashier(container) {
 
   function setTender(mode) {
     selectedTender = mode;
-    const activeClass = 'py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 border-emerald-500 text-emerald-800';
-    const inactiveClass = 'py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1';
+    const activeClass = 'py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300';
+    const inactiveClass = 'py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1';
 
     if (cashBtn) cashBtn.className = mode === 'cash' ? activeClass : inactiveClass;
     if (cardBtn) cardBtn.className = mode === 'visa' || mode === 'card' ? activeClass : inactiveClass;
@@ -520,7 +526,7 @@ export function renderCashier(container) {
   if (checkoutBtn) {
     checkoutBtn.addEventListener('click', async () => {
       if (cart.length === 0) {
-        showToast('Cart is empty. Add products before proceeding to checkout.', 'warning');
+        showToast(t('cartEmpty'), 'warning');
         return;
       }
 
@@ -529,14 +535,14 @@ export function renderCashier(container) {
         : (Number(tenderInput?.value) || cartSummary.total);
 
       if (selectedTender === 'cash' && tenderedAmount < cartSummary.total) {
-        showToast(`Amount tendered (${tenderedAmount.toFixed(2)} EGP) is less than total due (${cartSummary.total.toFixed(2)} EGP).`, 'warning');
+        showToast(`Tendered amount is less than total due.`, 'warning');
         return;
       }
 
       checkoutBtn.disabled = true;
       checkoutBtn.innerHTML = `
         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span>Authorizing Order & Deducting Stock...</span>
+        <span>${t('orderAuthorizing')}</span>
       `;
 
       try {
@@ -576,7 +582,7 @@ export function renderCashier(container) {
         checkoutBtn.disabled = false;
         checkoutBtn.innerHTML = `
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          <span>Complete Order / Checkout</span>
+          <span>${t('completeOrder')}</span>
         `;
       }
     });
