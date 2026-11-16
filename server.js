@@ -10,6 +10,7 @@ const productRoutes = require('./src/routes/products');
 const transactionRoutes = require('./src/routes/transactions');
 const analyticsRoutes = require('./src/routes/analytics');
 const userRoutes = require('./src/routes/users');
+const settingsRoutes = require('./src/routes/settings');
 
 const app = express();
 
@@ -73,6 +74,10 @@ app.use('/api/admin/users', userRoutes);
 app.use('/admin/users', userRoutes);
 app.use('/api/admin', userRoutes);
 app.use('/admin', userRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/settings', settingsRoutes);
+app.use('/api/admin/settings', settingsRoutes);
+app.use('/admin/settings', settingsRoutes);
 
 // Serve Static Frontend Assets
 app.use(express.static(path.join(__dirname, 'public')));

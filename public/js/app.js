@@ -139,6 +139,17 @@ class App {
       let analytics = null;
       let txns = state.transactions || [];
       let users = state.users || [];
+      let settings = state.settings;
+
+      // Fetch dynamic settings (currency, tax, thresholds, branding)
+      try {
+        const settingsRes = await api.getSettings();
+        if (settingsRes && settingsRes.settings) {
+          settings = settingsRes.settings;
+        }
+      } catch (settingsErr) {
+        console.warn('Settings fetch warning:', settingsErr);
+      }
 
       // If Admin, also fetch analytics, users, and transactions
       if (state.user.role === 'admin') {
@@ -158,6 +169,7 @@ class App {
         analytics: analytics || state.analytics,
         transactions: txns,
         users,
+        settings,
         isLoading: false
       });
     } catch (err) {

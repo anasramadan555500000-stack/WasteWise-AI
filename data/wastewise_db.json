@@ -27,8 +27,8 @@
       "category": "Buckets",
       "costPrice": 160,
       "sellingPrice": 250,
-      "discountPrice": 187.5,
-      "stock": 44,
+      "discountPrice": null,
+      "stock": 45,
       "minStockThreshold": 15,
       "expiryDate": "2026-11-19",
       "alertDaysBefore": 2,
@@ -115,51 +115,9 @@
       "barcode": "622100100106",
       "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80",
       "description": "Chilled refreshing fizzy soft drink can 330ml, served ice cold."
-    },
-    {
-      "id": "prod_fc_1794770869026",
-      "sku": "FC-139",
-      "name": "Expired Test Tender Chicken",
-      "category": "Meals",
-      "costPrice": 25,
-      "sellingPrice": 50,
-      "price": 50,
-      "discountPrice": null,
-      "stock": 10,
-      "minStockThreshold": 15,
-      "expiryDate": "2026-11-10",
-      "expiry_date": "2026-11-10",
-      "alertDaysBefore": 2,
-      "barcode": "622100715406",
-      "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
-      "image_url": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
-      "description": ""
     }
   ],
   "transactions": [
-    {
-      "id": "txn_1794770869019_738",
-      "invoiceNumber": "INV-2026-26678",
-      "cashierId": "usr_cashier",
-      "cashierName": "Karim Zaki (POS Cashier)",
-      "timestamp": "2026-11-15T19:27:49.019Z",
-      "items": [
-        {
-          "productId": "prod_fc_101",
-          "name": "Crispy Chicken Bucket (12 Pcs)",
-          "quantity": 1,
-          "unitPrice": 250,
-          "costPrice": 160,
-          "total": 250
-        }
-      ],
-      "subtotal": 250,
-      "tax": 20,
-      "total": 270,
-      "paymentMethod": "cash",
-      "amountTendered": 300,
-      "changeDue": 30
-    },
     {
       "id": "txn_fc_901",
       "invoiceNumber": "INV-2026-901",
@@ -233,94 +191,28 @@
       "changeDue": 0
     }
   ],
+  "settings": {
+    "restaurantName": "WasteWise AI • Fried Chicken Express",
+    "branchName": "Main Branch - Downtown Cairo",
+    "address": "15 El-Tahrir Square, Downtown, Cairo, Egypt",
+    "phone": "+20 100 123 4567",
+    "receiptFooter": "Thank you for choosing WasteWise AI! Quality fried chicken, zero food waste.",
+    "currency": "EGP",
+    "taxRate": 0.08,
+    "enabledPaymentMethods": {
+      "cash": true,
+      "card": true,
+      "wallet": true
+    },
+    "warningDaysBefore": 2,
+    "criticalDaysBefore": 1,
+    "defaultMinStockThreshold": 15,
+    "autoBlockExpiredCheckout": true
+  },
   "auditLogs": [
     {
-      "id": "audit_1794770947113_712",
-      "timestamp": "2026-11-15T19:29:07.113Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "USER_LOGIN",
-      "entityType": "USER",
-      "entityId": "usr_admin",
-      "details": {
-        "email": "admin@wastewise.com",
-        "role": "admin"
-      },
-      "ip": "203.0.113.195"
-    },
-    {
-      "id": "audit_1794770869113_509",
-      "timestamp": "2026-11-15T19:27:49.113Z",
-      "userId": "usr_cashier",
-      "userName": "Karim Zaki (POS Cashier)",
-      "action": "USER_LOGOUT",
-      "entityType": "USER",
-      "entityId": "usr_cashier",
-      "details": {
-        "email": "cashier@wastewise.com"
-      },
-      "ip": "127.0.0.1"
-    },
-    {
-      "id": "audit_1794770869106_490",
-      "timestamp": "2026-11-15T19:27:49.106Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "EXPORT_DATABASE_BACKUP",
-      "entityType": "DATABASE",
-      "entityId": null,
-      "details": {
-        "totalProducts": 7,
-        "totalTransactions": 3
-      },
-      "ip": "127.0.0.1"
-    },
-    {
-      "id": "audit_1794770869074_888",
-      "timestamp": "2026-11-15T19:27:49.074Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "MARKDOWN_PRODUCT",
-      "entityType": "PRODUCT",
-      "entityId": "prod_fc_101",
-      "details": {
-        "name": "Crispy Chicken Bucket (12 Pcs)",
-        "discountPercentage": 25,
-        "discountPrice": 187.5
-      },
-      "ip": "127.0.0.1"
-    },
-    {
-      "id": "audit_1794770854838_789",
-      "timestamp": "2026-11-15T19:27:34.838Z",
-      "userId": "usr_cashier",
-      "userName": "Karim Zaki (POS Cashier)",
-      "action": "USER_LOGIN",
-      "entityType": "USER",
-      "entityId": "usr_cashier",
-      "details": {
-        "email": "cashier@wastewise.com",
-        "role": "cashier"
-      },
-      "ip": "127.0.0.1"
-    },
-    {
-      "id": "audit_1794770854728_745",
-      "timestamp": "2026-11-15T19:27:34.728Z",
-      "userId": "usr_admin",
-      "userName": "Tariq Mansour (General Manager)",
-      "action": "USER_LOGIN",
-      "entityType": "USER",
-      "entityId": "usr_admin",
-      "details": {
-        "email": "admin@wastewise.com",
-        "role": "admin"
-      },
-      "ip": "127.0.0.1"
-    },
-    {
       "id": "audit_init_1",
-      "timestamp": "2026-11-15T19:27:34.577Z",
+      "timestamp": "2026-11-16T17:15:56.750Z",
       "userId": "usr_admin",
       "userName": "Tariq Mansour (General Manager)",
       "action": "INIT_SYSTEM",
@@ -332,12 +224,10 @@
       "ip": "127.0.0.1"
     }
   ],
-  "revokedTokens": [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzcl9jYXNoaWVyIiwiZW1haWwiOiJjYXNoaWVyQHdhc3Rld2lzZS5jb20iLCJyb2xlIjoiY2FzaGllciIsIm5hbWUiOiJLYXJpbSBaYWtpIChQT1MgQ2FzaGllcikiLCJpYXQiOjE3OTQ3NzA4NTQsImV4cCI6MTc5NDgxNDA1NH0.3B6zWdjdTSwwBNeaWQwyo5pfKXTnEaN2Eiuv8L6zGDM"
-  ],
+  "revokedTokens": [],
   "metadata": {
-    "createdAt": "2026-11-15T19:27:34.579Z",
-    "lastUpdated": "2026-11-15T19:29:07.113Z",
+    "createdAt": "2026-11-16T17:15:56.753Z",
+    "lastUpdated": "2026-11-16T17:15:56.754Z",
     "systemDate": "2026-11-15"
   }
 }

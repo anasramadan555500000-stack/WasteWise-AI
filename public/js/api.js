@@ -72,6 +72,17 @@ class ApiClient {
     return await this.request('/auth/me');
   }
 
+  async updateProfile(profileData) {
+    const data = await this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData)
+    });
+    if (data.token) {
+      this.setToken(data.token);
+    }
+    return data;
+  }
+
   async logout() {
     if (this.token) {
       try {
@@ -171,6 +182,17 @@ class ApiClient {
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
+  }
+  // Settings Endpoints
+  async getSettings() {
+    return await this.request('/settings');
+  }
+
+  async updateSettings(settingsData) {
+    return await this.request('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settingsData)
+    });
   }
 }
 

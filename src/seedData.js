@@ -163,8 +163,28 @@ const defaultTransactions = [
   }
 ];
 
+const defaultSettings = {
+  restaurantName: 'WasteWise AI • Fried Chicken Express',
+  branchName: 'Main Branch - Downtown Cairo',
+  address: '15 El-Tahrir Square, Downtown, Cairo, Egypt',
+  phone: '+20 100 123 4567',
+  receiptFooter: 'Thank you for choosing WasteWise AI! Quality fried chicken, zero food waste.',
+  currency: 'EGP',
+  taxRate: 0.08,
+  enabledPaymentMethods: {
+    cash: true,
+    card: true,
+    wallet: true
+  },
+  warningDaysBefore: 2,
+  criticalDaysBefore: 1,
+  defaultMinStockThreshold: 15,
+  autoBlockExpiredCheckout: true
+};
+
 module.exports = {
   defaultUsers,
   defaultProducts,
-  defaultTransactions
+  defaultTransactions,
+  defaultSettings
 };

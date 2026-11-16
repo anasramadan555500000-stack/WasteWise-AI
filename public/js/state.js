@@ -1,4 +1,5 @@
 // Central Reactive State Store for WasteWise AI (Fried Chicken Edition)
+import { calculateExpiry } from './utils/formatters.js';
 
 const INITIAL_FALLBACK_PRODUCTS = [
   {
@@ -208,6 +209,25 @@ export function computeFallbackAnalytics(products = INITIAL_FALLBACK_PRODUCTS) {
   };
 }
 
+export const DEFAULT_SETTINGS = {
+  restaurantName: 'WasteWise AI • Fried Chicken Express',
+  branchName: 'Main Branch - Downtown Cairo',
+  address: '15 El-Tahrir Square, Downtown, Cairo, Egypt',
+  phone: '+20 100 123 4567',
+  receiptFooter: 'Thank you for choosing WasteWise AI! Quality fried chicken, zero food waste.',
+  currency: 'EGP',
+  taxRate: 0.08,
+  enabledPaymentMethods: {
+    cash: true,
+    card: true,
+    wallet: true
+  },
+  warningDaysBefore: 2,
+  criticalDaysBefore: 1,
+  defaultMinStockThreshold: 15,
+  autoBlockExpiredCheckout: true
+};
+
 class StateStore {
   constructor() {
     let savedUser = null;
@@ -222,6 +242,7 @@ class StateStore {
       user: savedUser,
       currentView: savedUser ? (savedUser.role === 'admin' ? 'admin' : 'cashier') : 'auth',
       adminTab: 'inventory',
+      settings: { ...DEFAULT_SETTINGS },
       products: initialProducts,
       filteredProducts: initialProducts,
       cart: [],
@@ -286,16 +307,19 @@ class StateStore {
     }
 
     if (status && status !== 'all') {
-      list = list.filter(p => p.status === status);
+      list = list.filter(p => {
+        const exp = calculateExpiry(p.expiryDate, p.alertDaysBefore);
+        return exp.status === status || p.status === status;
+      });
     }
 
     if (search && search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(p => 
-        p.name.toLowerCase().includes(q) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
         (p.sku && p.sku.toLowerCase().includes(q)) ||
-        (p.barcode && p.barcode.includes(q)) ||
-        p.category.toLowerCase().includes(q)
+        (p.barcode && String(p.barcode).toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q))
       );
     }
 
@@ -364,9 +388,10 @@ class StateStore {
     this.setState({ cart: [] });
   }
 
-  getCartSummary(taxRate = 0.08) {
+  getCartSummary(taxRate) {
     let subtotal = 0;
     let totalItems = 0;
+    const effectiveTaxRate = taxRate !== undefined ? taxRate : (this.state.settings?.taxRate !== undefined ? this.state.settings.taxRate : 0.08);
 
     for (const item of this.state.cart) {
       const price = item.product.discountPrice !== null ? item.product.discountPrice : item.product.sellingPrice;
@@ -375,7 +400,7 @@ class StateStore {
     }
 
     subtotal = Number(subtotal.toFixed(2));
-    const tax = Number((subtotal * taxRate).toFixed(2));
+    const tax = Number((subtotal * effectiveTaxRate).toFixed(2));
     const total = Number((subtotal + tax).toFixed(2));
 
     return {

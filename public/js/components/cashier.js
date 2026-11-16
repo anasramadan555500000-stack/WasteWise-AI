@@ -6,10 +6,91 @@ import { showToast } from './toast.js';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';
 
+function renderProductGridHtml(filteredProducts) {
+  if (filteredProducts.length === 0) {
+    return `
+      <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+        <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <p class="font-bold text-slate-700">No items found</p>
+        <p class="text-xs text-slate-400">Try clearing the search filter or scanning a different barcode.</p>
+      </div>
+    `;
+  }
+
+  return filteredProducts.map(p => {
+    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore);
+    const isPulse = expiry.isPulse;
+    const isOutOfStock = p.stock <= 0;
+    const effectivePrice = p.discountPrice !== null ? p.discountPrice : p.sellingPrice;
+
+    return `
+      <div class="pos-product-card bg-white rounded-2xl border border-slate-200 p-3 ww-card-shadow ww-card-shadow-hover flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group ${isPulse ? 'pulse-warning bg-amber-50/20' : ''} ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}"
+        data-id="${p.id}">
+        
+        <!-- Top Image & Expiry Tag -->
+        <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2.5">
+          <img src="${p.image || FALLBACK_IMG}" alt="${p.name}"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
+          
+          <!-- Expiry Badge -->
+          <div class="absolute top-2 left-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${expiry.badgeClass}">
+              ${expiry.label}
+            </span>
+          </div>
+
+          <!-- Discount Badge -->
+          ${p.discountPrice ? `
+            <div class="absolute top-2 right-2">
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-sm">
+                SALE
+              </span>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Name & Category -->
+        <div class="space-y-1">
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">${p.category}</div>
+          <div class="text-xs font-bold text-slate-900 line-clamp-1 leading-snug" title="${p.name}">${p.name}</div>
+        </div>
+
+        <!-- Price & Stock Foot -->
+        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-extrabold text-slate-900">${formatCurrency(effectivePrice)}</div>
+            ${p.discountPrice ? `
+              <div class="text-[10px] text-slate-400 line-through">${formatCurrency(p.sellingPrice)}</div>
+            ` : ''}
+          </div>
+
+          <!-- Stock Counter Tag -->
+          <div class="text-right">
+            <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600'}">
+              ${p.stock} left
+            </span>
+            <div class="text-[9px] text-slate-400 font-mono">${p.sku}</div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
+
 export function renderCashier(container) {
+  // Capture focus before re-render
+  const activeEl = document.activeElement;
+  const wasSearchFocused = activeEl && activeEl.id === 'pos-search-input';
+  const selStart = wasSearchFocused ? activeEl.selectionStart : null;
+  const selEnd = wasSearchFocused ? activeEl.selectionEnd : null;
+
   const state = store.getState();
-  const { products, filteredProducts, cart, filters } = state;
+  const { products, filteredProducts, cart, filters, settings } = state;
   const cartSummary = store.getCartSummary();
+  const taxPct = ((settings?.taxRate !== undefined ? settings.taxRate : 0.08) * 100).toFixed(0);
+  const enabledPayments = settings?.enabledPaymentMethods || { cash: true, card: true, wallet: true };
 
   container.innerHTML = `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -20,14 +101,17 @@ export function renderCashier(container) {
           
           <!-- Search & Category Filters Bar -->
           <div class="bg-white p-4 rounded-2xl border border-slate-200 ww-card-shadow space-y-3">
-            <!-- Search Bar -->
+            <!-- Search Bar with Live Instant Filter & Barcode Scanner -->
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </div>
-              <input type="text" id="pos-search-input" value="${filters.search}"
-                placeholder="Search food by name, SKU, or scan barcode (Press Enter)..."
-                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+              <input type="text" id="pos-search-input" value="${filters.search || ''}"
+                placeholder="Search food by name, SKU, or scan barcode (Press Enter to quick-add)..."
+                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium" />
+              <button type="button" id="pos-btn-clear-search" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors ${filters.search ? '' : 'hidden'}" title="Clear search">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
             </div>
 
             <!-- Category Filter Pills -->
@@ -41,73 +125,8 @@ export function renderCashier(container) {
           </div>
 
           <!-- Product Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-            ${filteredProducts.length === 0 ? `
-              <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-                <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                <p class="font-bold text-slate-700">No items found</p>
-                <p class="text-xs text-slate-400">Try clearing the search filter.</p>
-              </div>
-            ` : filteredProducts.map(p => {
-              const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore);
-              const isPulse = expiry.isPulse;
-              const isOutOfStock = p.stock <= 0;
-              const effectivePrice = p.discountPrice !== null ? p.discountPrice : p.sellingPrice;
-
-              return `
-                <div class="pos-product-card bg-white rounded-2xl border border-slate-200 p-3 ww-card-shadow ww-card-shadow-hover flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group ${isPulse ? 'pulse-warning bg-amber-50/20' : ''} ${isOutOfStock ? 'opacity-50 pointer-events-none' : ''}"
-                  data-id="${p.id}">
-                  
-                  <!-- Top Image & Expiry Tag -->
-                  <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2.5">
-                    <img src="${p.image || FALLBACK_IMG}" alt="${p.name}"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
-                    
-                    <!-- Expiry Badge -->
-                    <div class="absolute top-2 left-2">
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${expiry.badgeClass}">
-                        ${expiry.label}
-                      </span>
-                    </div>
-
-                    <!-- Discount Badge -->
-                    ${p.discountPrice ? `
-                      <div class="absolute top-2 right-2">
-                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-sm">
-                          SALE
-                        </span>
-                      </div>
-                    ` : ''}
-                  </div>
-
-                  <!-- Name & Category -->
-                  <div class="space-y-1">
-                    <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">${p.category}</div>
-                    <div class="text-xs font-bold text-slate-900 line-clamp-1 leading-snug" title="${p.name}">${p.name}</div>
-                  </div>
-
-                  <!-- Price & Stock Foot -->
-                  <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                    <div>
-                      <div class="text-sm font-extrabold text-slate-900">${formatCurrency(effectivePrice)}</div>
-                      ${p.discountPrice ? `
-                        <div class="text-[10px] text-slate-400 line-through">${formatCurrency(p.sellingPrice)}</div>
-                      ` : ''}
-                    </div>
-
-                    <!-- Stock Counter Tag -->
-                    <div class="text-right">
-                      <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600'}">
-                        ${p.stock} left
-                      </span>
-                      <div class="text-[9px] text-slate-400 font-mono">${p.sku}</div>
-                    </div>
-                  </div>
-
-                </div>
-              `;
-            }).join('')}
+          <div id="pos-product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+            ${renderProductGridHtml(filteredProducts)}
           </div>
 
         </div>
@@ -135,7 +154,7 @@ export function renderCashier(container) {
               ` : ''}
             </div>
 
-            <!-- Cart Items Container (with Micro-interaction 3: Slide-in 300ms + Scale Pop 1.02) -->
+            <!-- Cart Items Container -->
             <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
               ${cart.length === 0 ? `
                 <div class="py-12 text-center text-slate-400">
@@ -191,7 +210,7 @@ export function renderCashier(container) {
                 <span class="font-semibold text-slate-800">${formatCurrency(cartSummary.subtotal)}</span>
               </div>
               <div class="flex justify-between text-slate-500">
-                <span>Sales Tax (8%):</span>
+                <span>Sales Tax (${taxPct}%):</span>
                 <span class="font-semibold text-slate-800">${formatCurrency(cartSummary.tax)}</span>
               </div>
               <div class="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
@@ -200,25 +219,33 @@ export function renderCashier(container) {
               </div>
             </div>
 
-            <!-- Payment Tender Selection (Multiple Payment Methods) -->
+            <!-- Payment Tender Selection -->
             <div class="pt-2 border-t border-slate-100 space-y-3">
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Payment Method Options</label>
               <div class="grid grid-cols-3 gap-1.5">
-                <button type="button" id="tender-cash-btn" class="py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 border-emerald-500 text-emerald-800">
-                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <span>Cash</span>
-                </button>
-                <button type="button" id="tender-card-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
-                  <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                  <span>Visa / Card</span>
-                </button>
-                <button type="button" id="tender-wallet-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
-                  <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                  <span>Wallet</span>
-                </button>
+                ${enabledPayments.cash !== false ? `
+                  <button type="button" id="tender-cash-btn" class="py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 border-emerald-500 text-emerald-800">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>Cash</span>
+                  </button>
+                ` : ''}
+
+                ${enabledPayments.card !== false ? `
+                  <button type="button" id="tender-card-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <span>Visa / Card</span>
+                  </button>
+                ` : ''}
+
+                ${enabledPayments.wallet !== false ? `
+                  <button type="button" id="tender-wallet-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-1">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span>Wallet</span>
+                  </button>
+                ` : ''}
               </div>
 
-              <!-- Quick Cash Tender Shortcuts -->
+              <!-- Quick Cash Tender Controls -->
               <div id="cash-tender-controls" class="space-y-2">
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-500 font-medium shrink-0">Tendered (EGP):</span>
@@ -282,27 +309,29 @@ export function renderCashier(container) {
     </div>
   `;
 
-  // Internal payment state
-  let selectedTender = 'cash';
-
-  // Event Handlers
-  // Product Card Click -> Add to Cart with Slide-in micro-interaction
-  const productCards = container.querySelectorAll('.pos-product-card');
-  productCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const id = card.getAttribute('data-id');
-      const product = products.find(p => p.id === id);
-      if (product) {
-        try {
-          store.addToCart(product, 1);
-          card.classList.add('scale-95');
-          setTimeout(() => card.classList.remove('scale-95'), 120);
-        } catch (err) {
-          showToast(err.message, 'warning');
+  // Attach Card Click Handlers
+  function attachProductCardListeners() {
+    const gridEl = container.querySelector('#pos-product-grid');
+    if (!gridEl) return;
+    const cards = gridEl.querySelectorAll('.pos-product-card');
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-id');
+        const product = store.getState().products.find(p => p.id === id);
+        if (product) {
+          try {
+            store.addToCart(product, 1);
+            card.classList.add('scale-95');
+            setTimeout(() => card.classList.remove('scale-95'), 120);
+          } catch (err) {
+            showToast(err.message, 'warning');
+          }
         }
-      }
+      });
     });
-  });
+  }
+
+  attachProductCardListeners();
 
   // Quantity Controls
   const incButtons = container.querySelectorAll('.cart-btn-increment');
@@ -355,28 +384,45 @@ export function renderCashier(container) {
     btn.addEventListener('click', () => {
       const cat = btn.getAttribute('data-category');
       store.setState({
-        filters: { ...filters, category: cat }
+        filters: { ...store.getState().filters, category: cat }
       });
     });
   });
 
-  // Search Input & Barcode Scanner handler on Enter key
+  // Search Input, Clear Button, and Barcode Scanner Enter Handler
   const searchInput = container.querySelector('#pos-search-input');
+  const clearSearchBtn = container.querySelector('#pos-btn-clear-search');
+  const productGrid = container.querySelector('#pos-product-grid');
+
+  function updateGridDirectly(query) {
+    store.state.filters.search = query;
+    store.computeFilteredProducts();
+    const updatedFiltered = store.getState().filteredProducts;
+    if (productGrid) {
+      productGrid.innerHTML = renderProductGridHtml(updatedFiltered);
+      attachProductCardListeners();
+    }
+    if (clearSearchBtn) {
+      clearSearchBtn.classList.toggle('hidden', !query);
+    }
+  }
+
   if (searchInput) {
+    // Instant live search without losing focus
     searchInput.addEventListener('input', (e) => {
-      store.setState({
-        filters: { ...filters, search: e.target.value }
-      });
+      updateGridDirectly(e.target.value);
     });
 
+    // Barcode scanner Enter key listener
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const val = e.target.value.trim().toLowerCase();
         if (!val) return;
 
-        const match = products.find(p =>
-          (p.barcode && p.barcode.toLowerCase() === val) ||
+        const currentProducts = store.getState().products;
+        const match = currentProducts.find(p =>
+          (p.barcode && String(p.barcode).toLowerCase() === val) ||
           (p.sku && p.sku.toLowerCase() === val) ||
           p.name.toLowerCase() === val
         );
@@ -384,20 +430,41 @@ export function renderCashier(container) {
         if (match) {
           try {
             store.addToCart(match, 1);
-            showToast(`Scanned & added to cart: ${match.name}`, 'success');
+            showToast(`Scanned & added: ${match.name}`, 'success');
             searchInput.value = '';
-            store.setState({ filters: { ...filters, search: '' } });
+            updateGridDirectly('');
+            searchInput.focus();
           } catch (err) {
             showToast(err.message, 'warning');
           }
         } else {
-          showToast(`No item matching barcode/SKU: "${val}".`, 'warning');
+          showToast(`No item matching barcode/SKU: "${val}"`, 'warning');
         }
       }
     });
   }
 
-  // Payment Tender Buttons
+  // Clear search button click
+  if (clearSearchBtn && searchInput) {
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      updateGridDirectly('');
+      searchInput.focus();
+    });
+  }
+
+  // Restore search input focus if previously focused before re-render
+  if (wasSearchFocused && searchInput) {
+    searchInput.focus();
+    if (selStart !== null && selEnd !== null) {
+      try {
+        searchInput.setSelectionRange(selStart, selEnd);
+      } catch (e) {}
+    }
+  }
+
+  // Payment Tender Selection
+  let selectedTender = enabledPayments.cash !== false ? 'cash' : (enabledPayments.card !== false ? 'visa' : 'mobile_wallet');
   const cashBtn = container.querySelector('#tender-cash-btn');
   const cardBtn = container.querySelector('#tender-card-btn');
   const walletBtn = container.querySelector('#tender-wallet-btn');
@@ -448,7 +515,7 @@ export function renderCashier(container) {
     });
   });
 
-  // Complete Checkout Button -> Calls API to instantly deduct stock from DB
+  // Complete Checkout Button
   const checkoutBtn = container.querySelector('#pos-btn-checkout');
   if (checkoutBtn) {
     checkoutBtn.addEventListener('click', async () => {
@@ -466,7 +533,6 @@ export function renderCashier(container) {
         return;
       }
 
-      // Prevent double checkout by immediately disabling button
       checkoutBtn.disabled = true;
       checkoutBtn.innerHTML = `
         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -485,7 +551,6 @@ export function renderCashier(container) {
 
         const result = await api.checkout(payload);
 
-        // Optimistic local stock decrement for instantaneous responsive feel
         const updatedLocalProducts = store.getState().products.map(p => {
           const cartItem = cart.find(ci => ci.product.id === p.id);
           if (cartItem) {
@@ -494,7 +559,6 @@ export function renderCashier(container) {
           return p;
         });
 
-        // Clear cart and update products
         store.setState({
           cart: [],
           products: result.updatedProducts || updatedLocalProducts
@@ -502,10 +566,8 @@ export function renderCashier(container) {
 
         showToast(`Order completed! Invoice ${result.transaction.invoiceNumber} recorded.`, 'success');
 
-        // Silent background sync
         window.dispatchEvent(new CustomEvent('wastewise:refresh'));
 
-        // Open Receipt Modal
         window.dispatchEvent(new CustomEvent('wastewise:openReceiptModal', {
           detail: { transaction: result.transaction }
         }));

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 const { calculateDaysUntilExpiry } = require('./utils/expiry');
-const { defaultUsers, defaultProducts, defaultTransactions } = require('./seedData');
+const { defaultUsers, defaultProducts, defaultTransactions, defaultSettings } = require('./seedData');
 
 // In-memory database cache ensuring 100% resilience on serverless platforms (Vercel, AWS Lambda)
 let memoryDb = null;
@@ -12,6 +12,7 @@ function getInitialData() {
     users: defaultUsers,
     products: defaultProducts,
     transactions: defaultTransactions,
+    settings: { ...defaultSettings },
     auditLogs: [
       {
         id: 'audit_init_1',
@@ -49,6 +50,7 @@ function loadDb() {
       parsed.users = parsed.users && parsed.users.length > 0 ? parsed.users : defaultUsers;
       parsed.products = parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts;
       parsed.transactions = parsed.transactions || defaultTransactions;
+      parsed.settings = { ...defaultSettings, ...(parsed.settings || {}) };
       memoryDb = parsed;
       return memoryDb;
     } catch (err) {
@@ -66,6 +68,7 @@ function loadDb() {
       parsed.users = parsed.users && parsed.users.length > 0 ? parsed.users : defaultUsers;
       parsed.products = parsed.products && parsed.products.length > 0 ? parsed.products : defaultProducts;
       parsed.transactions = parsed.transactions || defaultTransactions;
+      parsed.settings = { ...defaultSettings, ...(parsed.settings || {}) };
       memoryDb = parsed;
       // Gracefully attempt to write to /tmp for subsequent reads
       saveDb(memoryDb);
@@ -169,6 +172,63 @@ function getUserById(id) {
   const user = db.users.find(u => u.id === id);
   if (!user) return null;
   const { passwordHash, ...safeUser } = user;
+  return safeUser;
+}
+
+function getUserWithHash(id) {
+  const db = loadDb();
+  return db.users.find(u => u.id === id) || null;
+}
+
+function updateUserProfile(userId, { name, email, avatar, passwordHash, posPin, stationTitle }, auditUser = null) {
+  const db = loadDb();
+  const userIndex = db.users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    throw new Error('User not found.');
+  }
+
+  const existing = db.users[userIndex];
+  if (name && typeof name === 'string' && name.trim().length >= 2) {
+    existing.name = name.trim();
+  }
+  if (email && typeof email === 'string') {
+    const normalized = email.trim().toLowerCase();
+    const duplicate = db.users.find(u => u.email.toLowerCase() === normalized && u.id !== userId);
+    if (duplicate) {
+      throw new Error('Email is already in use by another user.');
+    }
+    existing.email = normalized;
+  }
+  if (avatar && typeof avatar === 'string') {
+    existing.avatar = avatar.trim();
+  }
+  if (passwordHash && typeof passwordHash === 'string') {
+    existing.passwordHash = passwordHash;
+  }
+  if (posPin !== undefined) {
+    existing.posPin = posPin ? String(posPin).trim() : null;
+  }
+  if (stationTitle !== undefined && existing.role === 'admin') {
+    existing.stationTitle = String(stationTitle).trim();
+  }
+
+  existing.updatedAt = new Date().toISOString();
+  db.users[userIndex] = existing;
+  saveDb(db);
+
+  if (auditUser) {
+    addAuditLog({
+      userId: auditUser.id,
+      userName: auditUser.name,
+      action: 'UPDATE_PROFILE',
+      entityType: 'USER',
+      entityId: userId,
+      details: { name: existing.name, email: existing.email, passwordChanged: !!passwordHash, posPinUpdated: posPin !== undefined },
+      ip: auditUser.ip || '127.0.0.1'
+    });
+  }
+
+  const { passwordHash: _, ...safeUser } = existing;
   return safeUser;
 }
 
@@ -332,14 +392,87 @@ function applyMarkdown(id, discountPercentage, auditUser = null) {
   return product;
 }
 
+// System Settings
+function getSettings() {
+  const db = loadDb();
+  return { ...defaultSettings, ...(db.settings || {}) };
+}
+
+function updateSettings(updates, auditUser = null) {
+  const db = loadDb();
+  db.settings = db.settings || { ...defaultSettings };
+
+  if (updates.restaurantName && typeof updates.restaurantName === 'string') {
+    db.settings.restaurantName = updates.restaurantName.trim();
+  }
+  if (updates.branchName && typeof updates.branchName === 'string') {
+    db.settings.branchName = updates.branchName.trim();
+  }
+  if (updates.address && typeof updates.address === 'string') {
+    db.settings.address = updates.address.trim();
+  }
+  if (updates.phone && typeof updates.phone === 'string') {
+    db.settings.phone = updates.phone.trim();
+  }
+  if (updates.receiptFooter && typeof updates.receiptFooter === 'string') {
+    db.settings.receiptFooter = updates.receiptFooter.trim();
+  }
+  if (updates.currency && typeof updates.currency === 'string') {
+    db.settings.currency = updates.currency.trim().toUpperCase();
+  }
+  if (updates.taxRate !== undefined && !isNaN(Number(updates.taxRate))) {
+    const rate = Number(updates.taxRate);
+    if (rate >= 0 && rate <= 0.5) {
+      db.settings.taxRate = Number(rate.toFixed(4));
+    }
+  }
+  if (updates.enabledPaymentMethods && typeof updates.enabledPaymentMethods === 'object') {
+    db.settings.enabledPaymentMethods = {
+      cash: updates.enabledPaymentMethods.cash !== false,
+      card: updates.enabledPaymentMethods.card !== false,
+      wallet: updates.enabledPaymentMethods.wallet !== false
+    };
+  }
+  if (updates.warningDaysBefore !== undefined && !isNaN(Number(updates.warningDaysBefore))) {
+    db.settings.warningDaysBefore = Math.max(1, parseInt(updates.warningDaysBefore, 10));
+  }
+  if (updates.criticalDaysBefore !== undefined && !isNaN(Number(updates.criticalDaysBefore))) {
+    db.settings.criticalDaysBefore = Math.max(0, parseInt(updates.criticalDaysBefore, 10));
+  }
+  if (updates.defaultMinStockThreshold !== undefined && !isNaN(Number(updates.defaultMinStockThreshold))) {
+    db.settings.defaultMinStockThreshold = Math.max(1, parseInt(updates.defaultMinStockThreshold, 10));
+  }
+  if (updates.autoBlockExpiredCheckout !== undefined) {
+    db.settings.autoBlockExpiredCheckout = !!updates.autoBlockExpiredCheckout;
+  }
+
+  saveDb(db);
+
+  if (auditUser) {
+    addAuditLog({
+      userId: auditUser.id,
+      userName: auditUser.name,
+      action: 'UPDATE_SETTINGS',
+      entityType: 'SETTINGS',
+      entityId: null,
+      details: updates,
+      ip: auditUser.ip || '127.0.0.1'
+    });
+  }
+
+  return db.settings;
+}
+
 // Transactions & POS Checkout
 function getTransactions() {
   const db = loadDb();
   return (db.transactions || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 }
 
-function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTendered, taxRate = 0.08 }) {
+function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTendered, taxRate }) {
   const db = loadDb();
+  const currentSettings = getSettings();
+  const effectiveTaxRate = taxRate !== undefined ? Number(taxRate) : (currentSettings.taxRate !== undefined ? currentSettings.taxRate : 0.08);
 
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error('Checkout cart cannot be empty.');
@@ -360,7 +493,7 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
     }
 
     const daysUntilExpiry = calculateDaysUntilExpiry(product.expiryDate || product.expiry_date, config.SIMULATED_CURRENT_DATE);
-    if (daysUntilExpiry <= 0) {
+    if (currentSettings.autoBlockExpiredCheckout !== false && daysUntilExpiry <= 0) {
       throw new Error(`Cannot sell expired item: "${product.name}". Stock must be disposed.`);
     }
 
@@ -392,7 +525,7 @@ function recordCheckout({ cashierId, cashierName, items, paymentMethod, amountTe
   }
 
   subtotal = Number(subtotal.toFixed(2));
-  const tax = Number((subtotal * taxRate).toFixed(2));
+  const tax = Number((subtotal * effectiveTaxRate).toFixed(2));
   const total = Number((subtotal + tax).toFixed(2));
 
   const normalizedMethod = (paymentMethod || 'cash').toLowerCase();
@@ -444,6 +577,7 @@ function getExportData() {
   return {
     exportDate: new Date().toISOString(),
     systemDate: config.SIMULATED_CURRENT_DATE,
+    settings: getSettings(),
     users: db.users.map(({ passwordHash, ...safeUser }) => safeUser),
     products: db.products,
     transactions: db.transactions || [],
@@ -456,6 +590,10 @@ module.exports = {
   getUsers,
   getUserByEmail,
   getUserById,
+  getUserWithHash,
+  updateUserProfile,
+  getSettings,
+  updateSettings,
   getProducts,
   getProductById,
   addProduct,

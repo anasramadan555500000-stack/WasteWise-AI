@@ -236,8 +236,91 @@ async function runTests() {
     }
     console.log('       -> Audit Logs & DB Export: SUCCESS (Audit entries verified: ' + auditData.auditLogs.length + ')');
 
-    // 13. Test Token Invalidation on Logout
-    console.log('[13/14] Testing Token Blacklist / Invalidation on Logout...');
+    // 13. Test User Profile & Credentials Management (PUT /api/auth/profile)
+    console.log('[13/16] Testing User Profile & Credentials Security (PUT /api/auth/profile)...');
+    // 13a. Attempt password update without current password -> must fail (400)
+    const badPassRes = await fetch(`${baseUrl}/api/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cashierToken}`
+      },
+      body: JSON.stringify({
+        newPassword: 'NewCashierPassword@123'
+      })
+    });
+    if (badPassRes.status !== 400) {
+      throw new Error(`Expected 400 when missing currentPassword, got ${badPassRes.status}`);
+    }
+
+    // 13b. Valid profile update with name, avatar, posPin
+    const profileRes = await fetch(`${baseUrl}/api/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cashierToken}`
+      },
+      body: JSON.stringify({
+        name: 'Karim Zaki (Senior POS)',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=160',
+        posPin: '9988'
+      })
+    });
+    const profileData = await profileRes.json();
+    if (!profileData.success || profileData.user.name !== 'Karim Zaki (Senior POS)' || profileData.user.posPin !== '9988') {
+      throw new Error('Profile update failed: ' + JSON.stringify(profileData));
+    }
+    console.log('       -> User Profile & POS PIN Update: SUCCESS');
+
+    // 14. Test System Settings API (GET /api/settings, PUT /api/admin/settings)
+    console.log('[14/16] Testing System Settings API (GET/PUT /api/admin/settings)...');
+    // 14a. Cashier can view settings
+    const getSettingsRes = await fetch(`${baseUrl}/api/settings`, {
+      headers: { 'Authorization': `Bearer ${cashierToken}` }
+    });
+    if (getSettingsRes.status !== 200) {
+      throw new Error(`Cashier failed to get settings: ${getSettingsRes.status}`);
+    }
+    const settingsData = await getSettingsRes.json();
+    if (!settingsData.settings || settingsData.settings.currency !== 'EGP') {
+      throw new Error('Unexpected settings payload: ' + JSON.stringify(settingsData));
+    }
+
+    // 14b. Cashier cannot update settings (403)
+    const cashierSettingsRes = await fetch(`${baseUrl}/api/admin/settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cashierToken}`
+      },
+      body: JSON.stringify({ taxRate: 0.12 })
+    });
+    if (cashierSettingsRes.status !== 403) {
+      throw new Error(`Expected 403 for cashier updating settings, got ${cashierSettingsRes.status}`);
+    }
+
+    // 14c. Admin update settings with valid values
+    const adminSettingsRes = await fetch(`${baseUrl}/api/admin/settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        restaurantName: 'WasteWise AI • Fried Chicken Express (Downtown)',
+        taxRate: 0.10,
+        warningDaysBefore: 3,
+        enabledPaymentMethods: { cash: true, card: true, wallet: false }
+      })
+    });
+    const updatedSettingsData = await adminSettingsRes.json();
+    if (!updatedSettingsData.success || updatedSettingsData.settings.taxRate !== 0.10) {
+      throw new Error('Admin settings update failed: ' + JSON.stringify(updatedSettingsData));
+    }
+    console.log('       -> System Settings RBAC & Persistence: SUCCESS');
+
+    // 15. Test Token Invalidation on Logout
+    console.log('[15/16] Testing Token Blacklist / Invalidation on Logout...');
     const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${cashierToken}` }
@@ -254,8 +337,8 @@ async function runTests() {
     }
     console.log('       -> Token Invalidation: SUCCESS (Revoked token rejected with 401)');
 
-    // 14. Test Brute-Force Rate Limiting (max 10 attempts per 15 min)
-    console.log('[14/14] Testing Brute-Force Rate Limiting on /api/auth/login...');
+    // 16. Test Brute-Force Rate Limiting (max 10 attempts per 15 min)
+    console.log('[16/16] Testing Brute-Force Rate Limiting on /api/auth/login...');
     authLimiter.clearAll();
     let got429 = false;
     for (let i = 1; i <= 12; i++) {
@@ -276,7 +359,7 @@ async function runTests() {
     console.log('       -> Brute-Force Rate Limiter: SUCCESS (429 verified)');
 
     console.log('\n================================================================');
-    console.log('   ALL 14 PRODUCTION-GRADE SECURITY & ARCHITECTURAL TESTS PASSED!');
+    console.log('   ALL 16 PRODUCTION-GRADE SECURITY & ARCHITECTURAL TESTS PASSED!');
     console.log('   ZERO VULNERABILITIES • ZERO REGRESSIONS • PRODUCTION-READY');
     console.log('================================================================\n');
 

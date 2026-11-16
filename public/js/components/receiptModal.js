@@ -1,8 +1,19 @@
 // Receipt Modal Component for POS Checkouts
+import { store } from '../state.js';
 import { formatCurrency, formatDateTime } from '../utils/formatters.js';
 
 export function renderReceiptModal(transaction) {
   if (!transaction) return;
+
+  const { settings, user } = store.getState();
+  const currentSettings = settings || {};
+  const restaurantName = currentSettings.restaurantName || 'WasteWise AI • Fried Chicken Express';
+  const branchName = currentSettings.branchName || 'Main Branch - Downtown Cairo';
+  const address = currentSettings.address || '15 El-Tahrir Square, Downtown, Cairo, Egypt';
+  const phone = currentSettings.phone || '+20 100 123 4567';
+  const receiptFooter = currentSettings.receiptFooter || 'Thank you for dining with us! Hot & Crispy Guarantee.';
+  const taxPct = ((currentSettings.taxRate !== undefined ? currentSettings.taxRate : 0.08) * 100).toFixed(0);
+  const currency = currentSettings.currency || 'EGP';
 
   const modalId = 'receipt-modal-container';
   let modalContainer = document.getElementById(modalId);
@@ -23,9 +34,11 @@ export function renderReceiptModal(transaction) {
           <!-- Store Header & Official Logo -->
           <div class="text-center pb-3 border-b-2 border-dashed border-slate-200">
             <img src="/logo.png" alt="WasteWise AI" class="w-16 h-16 mx-auto mb-2 object-contain grayscale rounded-xl bg-slate-950 p-1 border border-slate-300 shadow-sm" onerror="this.onerror=null;this.src='/images/logo.png'" />
-            <div class="text-xs uppercase tracking-widest text-emerald-600 font-extrabold">WasteWise AI • Fried Chicken Express</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">Fresh Fried Chicken & Live Expiry Management</div>
-            <div class="text-[10px] text-slate-400">Terminal Station #01 • Cairo Branch</div>
+            <div class="text-xs uppercase tracking-widest text-emerald-600 font-extrabold">${restaurantName}</div>
+            <div class="text-[11px] font-bold text-slate-700 mt-0.5">${branchName}</div>
+            <div class="text-[10px] text-slate-500">${address}</div>
+            <div class="text-[10px] text-slate-500">Tel: ${phone}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Terminal: ${user?.stationTitle || 'Station #01'}</div>
           </div>
 
           <!-- Metadata -->
@@ -54,9 +67,9 @@ export function renderReceiptModal(transaction) {
               <div class="flex justify-between items-start">
                 <div class="max-w-[70%]">
                   <div class="font-bold text-slate-900 leading-tight">${item.name}</div>
-                  <div class="text-[10px] text-slate-400">${item.quantity} x ${formatCurrency(item.unitPrice)}</div>
+                  <div class="text-[10px] text-slate-400">${item.quantity} x ${formatCurrency(item.unitPrice, currency)}</div>
                 </div>
-                <div class="font-bold text-slate-900">${formatCurrency(item.total)}</div>
+                <div class="font-bold text-slate-900">${formatCurrency(item.total, currency)}</div>
               </div>
             `).join('')}
           </div>
@@ -65,27 +78,27 @@ export function renderReceiptModal(transaction) {
           <div class="pt-2 border-t-2 border-dashed border-slate-200 text-xs space-y-1">
             <div class="flex justify-between text-slate-600">
               <span>Subtotal:</span>
-              <span>${formatCurrency(transaction.subtotal)}</span>
+              <span>${formatCurrency(transaction.subtotal, currency)}</span>
             </div>
             <div class="flex justify-between text-slate-600">
-              <span>Tax (8%):</span>
-              <span>${formatCurrency(transaction.tax)}</span>
+              <span>Tax (${taxPct}%):</span>
+              <span>${formatCurrency(transaction.tax, currency)}</span>
             </div>
             <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1 border-t border-slate-200">
               <span>TOTAL PAID:</span>
-              <span class="text-emerald-600">${formatCurrency(transaction.total)}</span>
+              <span class="text-emerald-600">${formatCurrency(transaction.total, currency)}</span>
             </div>
             <div class="flex justify-between text-[11px] text-slate-500 pt-1">
-              <span>Payment Tender (${transaction.paymentMethod}):</span>
-              <span>${formatCurrency(transaction.amountTendered)}</span>
+              <span>Payment Tender (${(transaction.paymentMethod || 'cash').toUpperCase()}):</span>
+              <span>${formatCurrency(transaction.amountTendered, currency)}</span>
             </div>
             <div class="flex justify-between text-xs font-bold text-slate-900">
               <span>Change Returned:</span>
-              <span>${formatCurrency(transaction.changeDue)}</span>
+              <span>${formatCurrency(transaction.changeDue, currency)}</span>
             </div>
           </div>
 
-          <!-- Simulated Barcode Graphic -->
+          <!-- Simulated Barcode Graphic & Footer -->
           <div class="text-center pt-3 pb-1 border-t border-dashed border-slate-200 space-y-1">
             <div class="h-10 mx-auto flex items-center justify-center gap-1 overflow-hidden px-4">
               ${Array.from({ length: 28 }).map((_, i) => `
@@ -93,20 +106,19 @@ export function renderReceiptModal(transaction) {
               `).join('')}
             </div>
             <div class="text-[10px] tracking-widest text-slate-400 font-mono">*${transaction.invoiceNumber}*</div>
-            <div class="text-[10px] text-emerald-600 font-bold mt-1">Thank you for dining with us! Hot & Crispy Guarantee.</div>
+            <div class="text-[10px] text-emerald-600 font-bold mt-1.5 leading-tight">${receiptFooter}</div>
           </div>
 
         </div>
 
-        <!-- Action Buttons (No-print) -->
-        <div class="no-print mt-6 flex items-center gap-2">
-          <button id="btn-print-receipt" class="flex-1 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5">
+        <!-- Print Actions -->
+        <div class="mt-6 flex items-center gap-2">
+          <button id="btn-print-receipt" class="flex-1 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
             <span>Print Receipt</span>
           </button>
-          <button id="btn-close-receipt" class="flex-1 py-2.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>New Order</span>
+          <button id="btn-close-receipt" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all">
+            Done
           </button>
         </div>
 
@@ -114,19 +126,16 @@ export function renderReceiptModal(transaction) {
     </div>
   `;
 
+  const closeBtn = modalContainer.querySelector('#btn-close-receipt');
+  const printBtn = modalContainer.querySelector('#btn-print-receipt');
+
   function closeModal() {
     modalContainer.innerHTML = '';
   }
 
-  const printBtn = modalContainer.querySelector('#btn-print-receipt');
-  if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      window.print();
-    });
-  }
+  closeBtn?.addEventListener('click', closeModal);
 
-  const closeBtn = modalContainer.querySelector('#btn-close-receipt');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeModal);
-  }
+  printBtn?.addEventListener('click', () => {
+    window.print();
+  });
 }
