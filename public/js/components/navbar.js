@@ -1,5 +1,5 @@
 // Header and Navigation Component
-// Enlarged Brand Logo, Visual Polish, Half-Life Expiry Notifications & Interactive Routing
+// Modern Icon-Driven Enterprise POS & Inventory Header
 import { store } from '../state.js';
 import { api } from '../api.js';
 import { showToast } from './toast.js';
@@ -114,101 +114,107 @@ export function renderNavbar(container) {
       <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-20 gap-2 sm:gap-4">
           
-          <!-- Left Section: Prominent Enlarged Brand Logo & Identity -->
+          <!-- 1. Left Section: Prominent, Unconstrained Brand Logo & Identity -->
           <div class="flex items-center gap-3 sm:gap-4 shrink-0">
-            <div class="relative group">
-              <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
-              <img src="/logo.png" 
-                class="relative w-14 h-14 object-contain rounded-2xl bg-slate-950 p-1 border-2 border-emerald-500/40 shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform duration-300 shrink-0 cursor-pointer" 
-                alt="WasteWise AI" 
-                onerror="this.onerror=null;this.src='/images/logo.png'" />
-            </div>
+            <img src="/logo.png" 
+              class="w-14 h-14 object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.35)] hover:scale-105 transition-transform duration-300 shrink-0 cursor-pointer" 
+              alt="WasteWise AI" 
+              onerror="this.onerror=null;this.src='/images/logo.png'" />
 
             <div class="flex flex-col">
               <div class="flex items-center gap-2">
                 <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                   ${t('brandTitle')} <span class="text-emerald-500">${t('brandAi')}</span>
                 </span>
-                <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap hidden xs:inline-flex items-center shadow-sm ${isAdmin ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}">
+                <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap hidden sm:inline-flex items-center shadow-sm ${isAdmin ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}">
                   ${isAdmin ? t('adminPanel') : t('posTerminal')}
                 </span>
               </div>
-              <span class="text-[11px] font-medium text-slate-400 hidden md:block">
+              <span class="text-[11px] font-medium text-slate-400 hidden lg:block">
                 ${t('authFooterSub')}
               </span>
             </div>
           </div>
 
-          <!-- Center Section: Grouped Live Shift, Anchor Date & Status Pills -->
-          <div class="hidden sm:flex items-center gap-2 shrink-0">
-            <!-- Shift Badge -->
-            <div class="hidden xl:flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm">
-              <span>🌤️</span>
-              <span>${t('liveShift')}</span>
-            </div>
-
-            <!-- Anchor Date Pill -->
-            <div class="hidden lg:flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-mono font-bold text-slate-600 dark:text-slate-300 shadow-sm" title="Simulation Anchor Date">
-              <span>📅</span>
-              <span>${t('anchorDateLabel')}</span>
-            </div>
-
-            <!-- Live Cloud Badge -->
-            <div class="flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm cursor-help" title="${t('cloudTooltip')}">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>${t('live')}</span>
-            </div>
-
-            <!-- Mode Switcher (Admin) or Station Badge (Cashier) -->
-            ${isAdmin ? `
-              <div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-inner">
-                <button id="nav-btn-admin-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer ${currentView === 'admin' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
-                  📊 <span class="hidden md:inline">${t('controlCenter')}</span>
-                </button>
-                <button id="nav-btn-pos-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer ${currentView === 'cashier' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
-                  🛒 <span class="hidden md:inline">${t('posView')}</span>
-                </button>
-              </div>
-            ` : `
-              <div class="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>${stationLabel}</span>
-              </div>
-            `}
-          </div>
-
-          <!-- Right Section: Language, Theme, Notifications & User Profile -->
-          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <!-- 2. Center/Right Quick Action Bar: Sleek Icon Buttons (w-10 h-10) -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            <!-- 1. Language Switcher (AR / EN) -->
-            <button id="nav-btn-lang" class="px-3 py-1.5 text-xs font-black rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer" title="Switch Language / تغيير اللغة">
-              <span>🌐</span>
-              <span class="tracking-wider">${currentLang === 'en' ? 'AR' : 'EN'}</span>
+            <!-- A. Admin View / POS Mode Switcher (For Admins) -->
+            ${isAdmin ? `
+              <div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-inner me-1">
+                <button id="nav-btn-admin-view" class="w-9 h-9 sm:w-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${currentView === 'admin' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}" title="${t('controlCenter')}">
+                  <span class="text-sm">📊</span>
+                  <span class="hidden md:inline">${t('controlCenter')}</span>
+                </button>
+                <button id="nav-btn-pos-view" class="w-9 h-9 sm:w-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${currentView === 'cashier' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}" title="${t('posView')}">
+                  <span class="text-sm">🛒</span>
+                  <span class="hidden md:inline">${t('posView')}</span>
+                </button>
+              </div>
+            ` : ''}
+
+            <!-- B. Live Sync / Cloud Status Icon Button -->
+            <button id="nav-btn-cloud-status" class="w-10 h-10 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all flex items-center justify-center shadow-sm cursor-pointer relative group" title="Supabase Cloud Live • ${stationLabel}">
+              <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+              <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500"></span>
             </button>
 
-            <!-- 2. Dark/Light Theme Switcher -->
-            <button id="nav-btn-theme" class="p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer shadow-sm" title="${isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}">
+            <!-- C. Quick Action Icon: Quick Add Product (Admin) OR Quick Drawer / POS Calc (Cashier) -->
+            ${isAdmin ? `
+              <button id="nav-btn-quick-add" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all flex items-center justify-center shadow-sm cursor-pointer group" title="Quick Add Inventory Product">
+                <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            ` : `
+              <button id="nav-btn-cash-drawer" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition-all flex items-center justify-center shadow-sm cursor-pointer" title="Open Cash Drawer / Quick POS Action">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </button>
+            `}
+
+            <!-- D. Full-Screen Mode Toggle Icon -->
+            <button id="nav-btn-fullscreen" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm cursor-pointer" title="Toggle Fullscreen Mode">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+
+            <!-- E. Language Switcher Icon Button (AR / EN) -->
+            <button id="nav-btn-lang" class="w-10 h-10 sm:w-auto sm:px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer font-bold text-xs" title="Switch Language / تغيير اللغة">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="hidden sm:inline font-black tracking-wider">${currentLang === 'en' ? 'AR' : 'EN'}</span>
+            </button>
+
+            <!-- F. Dark / Light Theme Toggle Icon Button -->
+            <button id="nav-btn-theme" class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm cursor-pointer" title="${isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}">
               ${isDark ? `
-                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
               ` : `
-                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
               `}
             </button>
 
-            <!-- 3. Smart Notifications Bell Dropdown -->
+            <!-- G. Interactive Notification Bell Icon -->
             <div class="relative" id="nav-notifications-wrapper">
-              <button id="nav-btn-notifications" class="relative p-2.5 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer shadow-sm" title="${t('notifications')}">
+              <button id="nav-btn-notifications" class="relative w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm cursor-pointer" title="${t('notifications')}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
                 ${activeAlerts.length > 0 ? `
-                  <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+                  <span class="absolute -top-1 -right-1 flex h-4.5 w-4.5">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-red-500 text-[9px] font-extrabold text-white">
+                    <span class="relative inline-flex items-center justify-center rounded-full h-4.5 w-4.5 bg-red-500 text-[10px] font-black text-white shadow-sm">
                       ${activeAlerts.length}
                     </span>
                   </span>
@@ -264,28 +270,25 @@ export function renderNavbar(container) {
               </div>
             </div>
 
-            <!-- 4. User Profile Trigger (Compact Avatar + Name) -->
-            <button id="nav-btn-profile" class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-sm" title="${t('profile')}">
+            <!-- H. Clean User Profile Trigger (Untruncated Name + Ring Avatar) -->
+            <button id="nav-btn-profile" class="flex items-center gap-2.5 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-sm group ms-1" title="${t('profile')}">
               <img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}" 
                 alt="${user.name}" 
-                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover ring-2 ring-emerald-500/20 shrink-0" 
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-emerald-500/40 shrink-0 group-hover:scale-105 transition-transform" 
                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'" />
               
-              <div class="hidden md:flex flex-col text-start">
-                <span class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[110px] leading-tight">${user.name}</span>
-                <span class="text-[10px] text-slate-400 capitalize leading-none">${user.role}</span>
+              <div class="hidden xl:flex flex-col text-start">
+                <span class="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap leading-tight">${user.name}</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold capitalize leading-none">${user.role === 'admin' ? t('adminPanel') : t('posTerminal')}</span>
               </div>
-
-              <svg class="w-3.5 h-3.5 text-slate-400 hidden sm:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
             </button>
 
-            <!-- 5. Sign Out Button -->
-            <button id="nav-btn-logout" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all cursor-pointer shadow-sm" title="${t('signOut')}">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- I. Prominent Direct Logout Button (Red-Tinted Pill) -->
+            <button id="nav-btn-logout" class="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer shrink-0 ms-1" title="${t('signOut')}">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
               </svg>
+              <span class="hidden sm:inline font-bold">${currentLang === 'ar' ? 'خروج' : 'Logout'}</span>
             </button>
 
           </div>
@@ -308,6 +311,42 @@ export function renderNavbar(container) {
   if (posViewBtn) {
     posViewBtn.addEventListener('click', () => {
       store.setState({ currentView: 'cashier' });
+    });
+  }
+
+  // Cloud Status Icon Handler
+  const cloudBtn = container.querySelector('#nav-btn-cloud-status');
+  if (cloudBtn) {
+    cloudBtn.addEventListener('click', () => {
+      showToast(currentLang === 'ar' ? 'سوبابيس السحابية متصلة بالكامل • المحطة #01 نشطة' : '⚡ Supabase Cloud Live • Connected to Station #01', 'success');
+    });
+  }
+
+  // Quick Action Icon Handlers
+  const quickAddBtn = container.querySelector('#nav-btn-quick-add');
+  if (quickAddBtn) {
+    quickAddBtn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('wastewise:openProductModal', { detail: { product: null } }));
+    });
+  }
+
+  const cashDrawerBtn = container.querySelector('#nav-btn-cash-drawer');
+  if (cashDrawerBtn) {
+    cashDrawerBtn.addEventListener('click', () => {
+      showToast(currentLang === 'ar' ? '💵 تم فتح درج النقدية للمحطة #01' : '💵 Cash Drawer Opened (POS Station #01)', 'info');
+    });
+  }
+
+  // Fullscreen Mode Toggle Handler
+  const fullscreenBtn = container.querySelector('#nav-btn-fullscreen');
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        showToast(currentLang === 'ar' ? 'وضع ملء الشاشة نشط' : 'Fullscreen POS Mode Enabled', 'info');
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
     });
   }
 
@@ -399,7 +438,7 @@ export function renderNavbar(container) {
     });
   }
 
-  // Logout Handler
+  // Direct Logout Handler
   const logoutBtn = container.querySelector('#nav-btn-logout');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
