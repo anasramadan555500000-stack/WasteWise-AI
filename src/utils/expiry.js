@@ -25,9 +25,37 @@ function calculateDaysUntilExpiry(expiryDateInput, referenceDateInput = config.S
 }
 
 /**
- * Classifies expiry into safe, warning, or expired (critical) states.
+ * Calculates total shelf life and half-life (50% remaining) metrics.
  */
-function classifyExpiryStatus(daysUntilExpiry, alertThreshold = 2) {
+function calculateHalfLife(expiryDateInput, createdAtInput, referenceDateInput = config.SIMULATED_CURRENT_DATE) {
+  const refMidnight = normalizeUtcMidnight(referenceDateInput) || normalizeUtcMidnight(new Date());
+  const expMidnight = normalizeUtcMidnight(expiryDateInput);
+
+  if (!expMidnight || !refMidnight) {
+    return { totalDays: 8, daysLeft: 8, halfLifeThreshold: 4, isHalfLife: false, isCriticalNearExpiry: false };
+  }
+
+  // If createdAtInput is missing, estimate standard 8-day batch shelf life
+  const createdMidnight = normalizeUtcMidnight(createdAtInput) || new Date(expMidnight.getTime() - (8 * 24 * 60 * 60 * 1000));
+  const totalDays = Math.max(1, Math.round((expMidnight.getTime() - createdMidnight.getTime()) / (1000 * 60 * 60 * 24)));
+  const daysLeft = Math.round((expMidnight.getTime() - refMidnight.getTime()) / (1000 * 60 * 60 * 24));
+  const halfLifeThreshold = Math.floor(totalDays / 2);
+  const isHalfLife = daysLeft <= halfLifeThreshold && daysLeft > 2;
+  const isCriticalNearExpiry = daysLeft <= 2 && daysLeft >= 0;
+
+  return {
+    totalDays,
+    daysLeft,
+    halfLifeThreshold,
+    isHalfLife,
+    isCriticalNearExpiry
+  };
+}
+
+/**
+ * Classifies expiry into safe, warning, or expired (critical) states, incorporating 50% half-life.
+ */
+function classifyExpiryStatus(daysUntilExpiry, alertThreshold = 2, halfLifeInfo = null) {
   let status = 'safe';
   let statusText = `${daysUntilExpiry} days left (Safe)`;
 
@@ -42,6 +70,10 @@ function classifyExpiryStatus(daysUntilExpiry, alertThreshold = 2) {
     // 2 days: Warning (Amber warning)
     status = 'warning';
     statusText = `Expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} (Warning)`;
+  } else if (halfLifeInfo && halfLifeInfo.isHalfLife) {
+    // 50% Half-life threshold reached
+    status = 'warning';
+    statusText = `Half-Life Reached (${daysUntilExpiry}d / ${halfLifeInfo.totalDays}d shelf life)`;
   }
 
   return {
@@ -49,16 +81,19 @@ function classifyExpiryStatus(daysUntilExpiry, alertThreshold = 2) {
     statusText,
     isExpired: status === 'expired',
     isExpiringSoon: status === 'warning',
+    isHalfLife: halfLifeInfo ? halfLifeInfo.isHalfLife : false,
+    isCriticalNearExpiry: daysUntilExpiry <= 2 && daysUntilExpiry >= 0,
     isCriticalPulse: daysUntilExpiry <= 2 && daysUntilExpiry >= 0
   };
 }
 
 /**
- * Standard product enrichment with consistent expiry metadata.
+ * Standard product enrichment with consistent expiry & half-life metadata.
  */
 function enrichProductWithExpiry(p, refDateStr = config.SIMULATED_CURRENT_DATE) {
   const daysUntilExpiry = calculateDaysUntilExpiry(p.expiryDate || p.expiry_date, refDateStr);
-  const classification = classifyExpiryStatus(daysUntilExpiry, p.alertDaysBefore || 2);
+  const halfLife = calculateHalfLife(p.expiryDate || p.expiry_date, p.createdAt || p.created_at, refDateStr);
+  const classification = classifyExpiryStatus(daysUntilExpiry, p.alertDaysBefore || 2, halfLife);
 
   let stockStatus = 'in_stock';
   const stock = parseInt(p.stock, 10) || 0;
@@ -80,6 +115,10 @@ function enrichProductWithExpiry(p, refDateStr = config.SIMULATED_CURRENT_DATE) 
     effectivePrice,
     stock,
     daysUntilExpiry,
+    totalShelfDays: halfLife.totalDays,
+    halfLifeThreshold: halfLife.halfLifeThreshold,
+    isHalfLife: halfLife.isHalfLife,
+    isCriticalNearExpiry: halfLife.isCriticalNearExpiry,
     status: classification.status,
     statusText: classification.statusText,
     stockStatus,
@@ -91,6 +130,7 @@ function enrichProductWithExpiry(p, refDateStr = config.SIMULATED_CURRENT_DATE) 
 module.exports = {
   normalizeUtcMidnight,
   calculateDaysUntilExpiry,
+  calculateHalfLife,
   classifyExpiryStatus,
   enrichProductWithExpiry
 };

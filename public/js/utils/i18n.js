@@ -217,7 +217,26 @@ const translations = {
     itemDescription: 'Item Description',
     totalPaid: 'TOTAL PAID',
     paymentTender: 'Payment Tender',
-    changeReturned: 'Change Returned'
+    changeReturned: 'Change Returned',
+
+    // New Upgrades: P&L, Half-Life & Visuals
+    halfLifeReached: 'Half-Life Reached (50% Shelf Life)',
+    criticalNearExpiry: 'Critical Near-Expiry',
+    monthlyPnLTitle: 'Monthly Profit & Loss (P&L) Analytics',
+    monthlyGrossRevenue: 'Monthly Gross Revenue',
+    monthlyNetProfit: 'Net Monthly Operating Profit',
+    monthlyProfitMargin: 'Monthly Profit Margin',
+    monthlyLossesBreakdown: 'Total Losses Breakdown',
+    expiredStockLoss: 'Expired Stock Loss',
+    atRiskStockLoss: 'At-Risk Near-Expiry Value',
+    markdownDiscountLoss: 'AI Markdown Price Reductions',
+    totalLosses: 'Total Realized & At-Risk Losses',
+    liveShift: 'Shift #01 • Morning Active',
+    anchorDateLabel: 'Anchor: Nov 15, 2026',
+    featurePosStockSync: '⚡ Live POS Stock Sync',
+    featureAiHalfLife: '🤖 AI Half-Life Expiry Engine',
+    featureRealtimePnL: '📊 Real-Time P&L Analytics',
+    viewInInventory: 'Inspect in Inventory'
   },
   ar: {
     // Brand & Header
@@ -434,7 +453,26 @@ const translations = {
     itemDescription: 'بيان الصنف',
     totalPaid: 'الإجمالي المدفوع',
     paymentTender: 'طريقة الدفع',
-    changeReturned: 'المتبقي المسترد'
+    changeReturned: 'المتبقي المسترد',
+
+    // New Upgrades: P&L, Half-Life & Visuals
+    halfLifeReached: 'تم بلوغ نصف مدة الصلاحية (50%)',
+    criticalNearExpiry: 'اقتراب حرج من انتهاء الصلاحية',
+    monthlyPnLTitle: 'التقرير المالي الشهري للأرباح والخسائر (P&L)',
+    monthlyGrossRevenue: 'إجمالي المبيعات الشهرية',
+    monthlyNetProfit: 'صافي الربح التشغيلي الشهري',
+    monthlyProfitMargin: 'هامش الربح الشهري',
+    monthlyLossesBreakdown: 'تفصيل إجمالي الخسائر والهدر',
+    expiredStockLoss: 'خسائر المخزون المنتهي',
+    atRiskStockLoss: 'قيمة المخزون المهدد بالتلف',
+    markdownDiscountLoss: 'تخفيضات الذكاء الاصطناعي المنفذة',
+    totalLosses: 'إجمالي الخسائر والمخاطر المالية',
+    liveShift: 'الوردية #01 • صباحي نشط',
+    anchorDateLabel: 'التاريخ المرجعي: 15 نوفمبر 2026',
+    featurePosStockSync: '⚡ مزامنة المخزون اللحظية لنقاط البيع',
+    featureAiHalfLife: '🤖 محرك الذكاء الاصطناعي لنصف مدة الصلاحية',
+    featureRealtimePnL: '📊 تحليلات فورية للأرباح والخسائر',
+    viewInInventory: 'معاينة في المخزون'
   }
 };
 

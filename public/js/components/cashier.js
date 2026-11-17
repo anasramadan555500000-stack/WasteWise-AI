@@ -68,7 +68,7 @@ function renderProductGridHtml(filteredProducts) {
 
           <!-- Stock Counter Tag -->
           <div class="text-end">
-            <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}">
+            <span class="text-[11px] font-bold ${p.stock <= p.minStockThreshold ? 'text-red-500' : 'text-slate-600 dark:text-slate-300'}" data-stock-count-for="${p.id}">
               ${p.stock} ${t('leftInStock')}
             </span>
             <div class="text-[9px] text-slate-400 font-mono">${p.sku}</div>
@@ -92,6 +92,15 @@ export function renderCashier(container) {
   const taxPct = ((settings?.taxRate !== undefined ? settings.taxRate : 0.08) * 100).toFixed(0);
   const enabledPayments = settings?.enabledPaymentMethods || { cash: true, card: true, wallet: true };
   const rtl = isRTL();
+
+  // Persisted Payment Tender & Amount
+  let selectedTender = store.state.selectedTender || (enabledPayments.cash !== false ? 'cash' : (enabledPayments.card !== false ? 'visa' : 'mobile_wallet'));
+  const currentTenderVal = store.state.tenderedAmount !== null && store.state.tenderedAmount !== undefined ? store.state.tenderedAmount : (cartSummary.total > 0 ? cartSummary.total : 0);
+  const activeCash = selectedTender === 'cash';
+  const activeCard = selectedTender === 'visa' || selectedTender === 'card';
+  const activeWallet = selectedTender === 'mobile_wallet' || selectedTender === 'wallet';
+  const tenderBtnActive = 'py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-500/20 shadow-sm cursor-pointer';
+  const tenderBtnInactive = 'py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer';
 
   const categoryPills = [
     { key: 'All', label: t('catAll') },
@@ -234,21 +243,21 @@ export function renderCashier(container) {
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">${t('paymentOptions')}</label>
               <div class="grid grid-cols-3 gap-1.5">
                 ${enabledPayments.cash !== false ? `
-                  <button type="button" id="tender-cash-btn" class="py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300">
+                  <button type="button" id="tender-cash-btn" class="${activeCash ? tenderBtnActive : tenderBtnInactive}">
                     <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     <span>${t('cash')}</span>
                   </button>
                 ` : ''}
 
                 ${enabledPayments.card !== false ? `
-                  <button type="button" id="tender-card-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1">
+                  <button type="button" id="tender-card-btn" class="${activeCard ? tenderBtnActive : tenderBtnInactive}">
                     <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                     <span>${t('card')}</span>
                   </button>
                 ` : ''}
 
                 ${enabledPayments.wallet !== false ? `
-                  <button type="button" id="tender-wallet-btn" class="py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1">
+                  <button type="button" id="tender-wallet-btn" class="${activeWallet ? tenderBtnActive : tenderBtnInactive}">
                     <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     <span>${t('wallet')}</span>
                   </button>
@@ -256,10 +265,10 @@ export function renderCashier(container) {
               </div>
 
               <!-- Quick Cash Tender Controls -->
-              <div id="cash-tender-controls" class="space-y-2">
+              <div id="cash-tender-controls" class="space-y-2 ${activeCash ? '' : 'hidden'}">
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0">${t('tendered')}</span>
-                  <input type="number" id="tender-amount-input" step="1" min="${cartSummary.total}" value="${cartSummary.total > 0 ? cartSummary.total : 0}"
+                  <input type="number" id="tender-amount-input" step="1" min="${cartSummary.total}" value="${currentTenderVal}"
                     class="w-full py-1.5 px-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                 </div>
                 
@@ -285,7 +294,7 @@ export function renderCashier(container) {
               </div>
 
               <!-- Visa / Card Tender Controls -->
-              <div id="card-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+              <div id="card-tender-controls" class="${activeCard ? '' : 'hidden'} p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
                 <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-semibold">
                   <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                   <span>${t('posTapActive')}</span>
@@ -295,7 +304,15 @@ export function renderCashier(container) {
               </div>
 
               <!-- Mobile Wallet Controls -->
-              <div id="wallet-tender-controls" class="hidden p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+              <div id="wallet-tender-controls" class="${activeWallet ? '' : 'hidden'} p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>${t('walletTransferActive')}</span>
+                </div>
+                <input type="text" id="wallet-phone-input" placeholder="${t('walletPhoneInput')}"
+                  class="w-full py-1.5 px-3 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white font-mono" value="01098765432" />
+              </div>
+            </div>
                 <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>${t('walletTransferActive')}</span>
@@ -470,7 +487,6 @@ export function renderCashier(container) {
   }
 
   // Payment Tender Selection
-  let selectedTender = enabledPayments.cash !== false ? 'cash' : (enabledPayments.card !== false ? 'visa' : 'mobile_wallet');
   const cashBtn = container.querySelector('#tender-cash-btn');
   const cardBtn = container.querySelector('#tender-card-btn');
   const walletBtn = container.querySelector('#tender-wallet-btn');
@@ -489,16 +505,17 @@ export function renderCashier(container) {
 
   function setTender(mode) {
     selectedTender = mode;
-    const activeClass = 'py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300';
-    const inactiveClass = 'py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1';
+    store.state.selectedTender = mode;
+    const activeClass = 'py-2 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-500/20 shadow-sm cursor-pointer';
+    const inactiveClass = 'py-2 px-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer';
 
     if (cashBtn) cashBtn.className = mode === 'cash' ? activeClass : inactiveClass;
-    if (cardBtn) cardBtn.className = mode === 'visa' || mode === 'card' ? activeClass : inactiveClass;
-    if (walletBtn) walletBtn.className = mode === 'mobile_wallet' ? activeClass : inactiveClass;
+    if (cardBtn) cardBtn.className = (mode === 'visa' || mode === 'card') ? activeClass : inactiveClass;
+    if (walletBtn) walletBtn.className = (mode === 'mobile_wallet' || mode === 'wallet') ? activeClass : inactiveClass;
 
     if (cashControls) cashControls.classList.toggle('hidden', mode !== 'cash');
     if (cardControls) cardControls.classList.toggle('hidden', mode !== 'visa' && mode !== 'card');
-    if (walletControls) walletControls.classList.toggle('hidden', mode !== 'mobile_wallet');
+    if (walletControls) walletControls.classList.toggle('hidden', mode !== 'mobile_wallet' && mode !== 'wallet');
   }
 
   if (cashBtn) cashBtn.addEventListener('click', () => setTender('cash'));
@@ -506,14 +523,18 @@ export function renderCashier(container) {
   if (walletBtn) walletBtn.addEventListener('click', () => setTender('mobile_wallet'));
 
   if (tenderInput) {
-    tenderInput.addEventListener('input', updateChangeCalculation);
+    tenderInput.addEventListener('input', () => {
+      store.state.tenderedAmount = Number(tenderInput.value) || 0;
+      updateChangeCalculation();
+    });
     updateChangeCalculation();
   }
 
   const quickCashBtns = container.querySelectorAll('.btn-quick-cash');
   quickCashBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const val = btn.getAttribute('data-val');
+      const val = Number(btn.getAttribute('data-val')) || 0;
+      store.state.tenderedAmount = val;
       if (tenderInput) {
         tenderInput.value = val;
         updateChangeCalculation();
@@ -567,7 +588,8 @@ export function renderCashier(container) {
 
         store.setState({
           cart: [],
-          products: result.updatedProducts || updatedLocalProducts
+          products: result.updatedProducts || updatedLocalProducts,
+          tenderedAmount: null
         });
 
         showToast(`Order completed! Invoice ${result.transaction.invoiceNumber} recorded.`, 'success');

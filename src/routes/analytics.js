@@ -14,31 +14,53 @@ router.get('/', authenticateToken, requireRole('admin'), (req, res) => {
     let totalRevenue = 0;
     let totalCogs = 0;
 
+    // Monthly filtering (current anchor month e.g. 2026-11)
+    const currentMonthPrefix = config.SIMULATED_CURRENT_DATE.slice(0, 7); // '2026-11'
+    let monthlyGrossRevenue = 0;
+    let monthlyCogs = 0;
+
     // Build a map of product costs
     const productCostMap = new Map();
     products.forEach(p => productCostMap.set(p.id, Number(p.costPrice) || 0));
 
     transactions.forEach(txn => {
-      totalRevenue += Number(txn.subtotal) || 0;
+      const txnSubtotal = Number(txn.subtotal) || 0;
+      totalRevenue += txnSubtotal;
+      
+      const isCurrentMonth = txn.timestamp && txn.timestamp.startsWith(currentMonthPrefix);
+      if (isCurrentMonth || !txn.timestamp) {
+        monthlyGrossRevenue += txnSubtotal;
+      }
+
       if (Array.isArray(txn.items)) {
         txn.items.forEach(item => {
           const cost = productCostMap.get(item.productId) || Number(item.costPrice) || 0;
-          totalCogs += cost * (Number(item.quantity) || 1);
+          const itemCogs = cost * (Number(item.quantity) || 1);
+          totalCogs += itemCogs;
+          if (isCurrentMonth || !txn.timestamp) {
+            monthlyCogs += itemCogs;
+          }
         });
       }
     });
 
-    // Authoritative calculation from real DB records (no artificial base inflate)
+    // Authoritative calculation from real DB records
     const finalRevenue = Number(totalRevenue.toFixed(2));
     const finalCogs = Number(totalCogs.toFixed(2));
     const netProfit = Number((finalRevenue - finalCogs).toFixed(2));
     const profitMarginPct = finalRevenue > 0 ? Number(((netProfit / finalRevenue) * 100).toFixed(1)) : 0;
+
+    const finalMonthlyRevenue = Number(monthlyGrossRevenue.toFixed(2));
+    const finalMonthlyCogs = Number(monthlyCogs.toFixed(2));
+    const monthlyNetProfit = Number((finalMonthlyRevenue - finalMonthlyCogs).toFixed(2));
+    const monthlyProfitMarginPct = finalMonthlyRevenue > 0 ? Number(((monthlyNetProfit / finalMonthlyRevenue) * 100).toFixed(1)) : 0;
 
     // Expiry and Waste Analysis using UTC-normalized expiry engine
     let totalStockUnits = 0;
     let totalInventoryValue = 0;
     let expiredWasteLoss = 0;
     let atRiskWasteLoss = 0;
+    let markdownDiscountLoss = 0;
     let safeCount = 0;
     let expiringSoonCount = 0;
     let expiredCount = 0;
@@ -55,6 +77,11 @@ router.get('/', authenticateToken, requireRole('admin'), (req, res) => {
 
       totalStockUnits += stock;
       totalInventoryValue += stock * cost;
+
+      // Track markdown price reduction losses
+      if (p.discountPrice && p.discountPrice < originalPrice) {
+        markdownDiscountLoss += (originalPrice - p.discountPrice) * stock;
+      }
 
       if (daysUntilExpiry <= 1) {
         // Critical Expiry (1 day or already expired)
@@ -122,6 +149,8 @@ router.get('/', authenticateToken, requireRole('admin'), (req, res) => {
     });
 
     const totalEstimatedWasteLoss = Number((expiredWasteLoss + atRiskWasteLoss).toFixed(2));
+    const finalMarkdownLoss = Number(markdownDiscountLoss.toFixed(2));
+    const totalLossesAll = Number((expiredWasteLoss + atRiskWasteLoss + finalMarkdownLoss).toFixed(2));
 
     res.json({
       success: true,
@@ -134,7 +163,26 @@ router.get('/', authenticateToken, requireRole('admin'), (req, res) => {
         totalInventoryValue: Number(totalInventoryValue.toFixed(2)),
         wasteLossEstimation: totalEstimatedWasteLoss,
         expiredWasteLoss: Number(expiredWasteLoss.toFixed(2)),
-        atRiskWasteLoss: Number(atRiskWasteLoss.toFixed(2))
+        atRiskWasteLoss: Number(atRiskWasteLoss.toFixed(2)),
+        markdownDiscountLoss: finalMarkdownLoss,
+        totalLosses: totalLossesAll,
+        monthlyGrossRevenue: finalMonthlyRevenue,
+        monthlyCogs: finalMonthlyCogs,
+        monthlyNetProfit: monthlyNetProfit,
+        monthlyProfitMarginPct: monthlyProfitMarginPct,
+        monthlyPnL: {
+          period: 'November 2026',
+          monthlyGrossRevenue: finalMonthlyRevenue,
+          monthlyCogs: finalMonthlyCogs,
+          monthlyNetProfit: monthlyNetProfit,
+          monthlyProfitMarginPct: monthlyProfitMarginPct,
+          lossesBreakdown: {
+            expiredStockLoss: Number(expiredWasteLoss.toFixed(2)),
+            atRiskStockLoss: Number(atRiskWasteLoss.toFixed(2)),
+            markdownDiscountLoss: finalMarkdownLoss,
+            totalLosses: totalLossesAll
+          }
+        }
       },
       inventoryOverview: {
         totalProducts: products.length,

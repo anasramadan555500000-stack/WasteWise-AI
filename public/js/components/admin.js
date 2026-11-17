@@ -27,7 +27,7 @@ function renderInventoryRowsHtml(filteredProducts) {
     const isPulse = expiry.isPulse;
 
     return `
-      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors ${isPulse ? 'pulse-warning bg-amber-50/30' : ''}">
+      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors ${isPulse ? 'pulse-warning bg-amber-50/30' : ''}" data-product-id="${p.id}">
         
         <!-- Product Info -->
         <td class="py-3.5 px-4">
@@ -256,6 +256,79 @@ export function renderAdmin(container) {
           </div>
         </div>
 
+      </div>
+
+      <!-- 2.5 Dedicated Monthly Financial Summary (P&L Breakdown) Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 ww-card-shadow p-5 space-y-4 transition-colors">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>${t('monthlyPnLTitle')}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                  ${financials.monthlyPnL?.period || 'November 2026'}
+                </span>
+              </h3>
+              <p class="text-xs text-slate-400">${t('liveDbSales')} • Real-Time COGS & Net Margin Aggregation</p>
+            </div>
+          </div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 self-start sm:self-auto">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Anchor Shift: Nov 15, 2026</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Monthly Revenue -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <div class="text-xs font-semibold text-slate-400 mb-1">${t('monthlyGrossRevenue')}</div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white">
+              ${formatCurrency(financials.monthlyGrossRevenue || financials.monthlyPnL?.monthlyGrossRevenue || 0)}
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">
+              COGS: <span class="font-semibold text-slate-600 dark:text-slate-300">${formatCurrency(financials.monthlyCogs || financials.monthlyPnL?.monthlyCogs || 0)}</span>
+            </div>
+          </div>
+
+          <!-- Monthly Net Operating Profit -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <div class="text-xs font-semibold text-slate-400 mb-1">${t('monthlyNetProfit')}</div>
+            <div class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
+              ${formatCurrency(financials.monthlyNetProfit || financials.monthlyPnL?.monthlyNetProfit || 0)}
+            </div>
+            <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+              ${financials.monthlyProfitMarginPct || financials.monthlyPnL?.monthlyProfitMarginPct || 0}% ${t('monthlyProfitMargin')}
+            </div>
+          </div>
+
+          <!-- Total Realized & At-Risk Losses -->
+          <div class="p-4 rounded-xl bg-red-50/40 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40">
+            <div class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">${t('totalLosses')}</div>
+            <div class="text-xl font-extrabold text-red-600 dark:text-red-400">
+              ${formatCurrency(financials.totalLosses || financials.monthlyPnL?.lossesBreakdown?.totalLosses || 0)}
+            </div>
+            <div class="text-[11px] text-red-500 font-medium mt-1">
+              ${t('monthlyLossesBreakdown')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Granular Losses Breakdown Pills -->
+        <div class="pt-2 flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${t('monthlyLossesBreakdown')}:</span>
+          <span class="px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 font-medium">
+            ${t('expiredStockLoss')}: <strong>${formatCurrency(financials.expiredWasteLoss || financials.monthlyPnL?.lossesBreakdown?.expiredStockLoss || 0)}</strong>
+          </span>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium">
+            ${t('atRiskStockLoss')}: <strong>${formatCurrency(financials.atRiskWasteLoss || financials.monthlyPnL?.lossesBreakdown?.atRiskStockLoss || 0)}</strong>
+          </span>
+          <span class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-medium">
+            ${t('markdownDiscountLoss')}: <strong>${formatCurrency(financials.markdownDiscountLoss || financials.monthlyPnL?.lossesBreakdown?.markdownDiscountLoss || 0)}</strong>
+          </span>
+        </div>
       </div>
 
       <!-- 3. Navigation Tabs & Tools -->
@@ -1019,6 +1092,34 @@ export function renderAdmin(container) {
       window.dispatchEvent(new CustomEvent('wastewise:openProductModal', { detail: { product: null } }));
     });
   }
+
+  // Interactive Notification Product Row Highlighting
+  function highlightProductRow(productId) {
+    if (!productId) return;
+    const targetRow = container.querySelector(`tr[data-product-id="${productId}"]`);
+    if (targetRow) {
+      container.querySelectorAll('.target-row-highlight').forEach(el => el.classList.remove('target-row-highlight'));
+      targetRow.classList.add('target-row-highlight');
+      targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        targetRow.classList.remove('target-row-highlight');
+      }, 4000);
+    }
+  }
+
+  if (store.state.highlightedProductId) {
+    const pid = store.state.highlightedProductId;
+    store.state.highlightedProductId = null;
+    setTimeout(() => highlightProductRow(pid), 100);
+  }
+
+  const highlightHandler = (e) => {
+    const pid = e.detail?.productId;
+    if (pid) {
+      highlightProductRow(pid);
+    }
+  };
+  window.addEventListener('wastewise:highlightProduct', highlightHandler, { once: true });
 
   // AI Markdown suggestions buttons in markdown tab
   const aiMarkdownBtns = container.querySelectorAll('.btn-apply-markdown');

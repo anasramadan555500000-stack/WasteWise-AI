@@ -8,6 +8,7 @@ import { renderCashier } from './components/cashier.js';
 import { renderProductModal } from './components/productModal.js';
 import { renderReceiptModal } from './components/receiptModal.js';
 import { showToast } from './components/toast.js';
+import { t } from './utils/i18n.js';
 
 class App {
   constructor() {
@@ -144,6 +145,59 @@ class App {
 
     try {
       const prodRes = await api.getProducts();
+      const newProducts = prodRes.products || state.products;
+
+      // Smart Diffing: Check if products actually changed
+      const oldProducts = state.products || [];
+      let productsChanged = false;
+      let onlyStockChanged = true;
+
+      if (oldProducts.length !== newProducts.length) {
+        productsChanged = true;
+        onlyStockChanged = false;
+      } else {
+        for (let i = 0; i < newProducts.length; i++) {
+          const np = newProducts[i];
+          const op = oldProducts[i];
+          if (!op || op.id !== np.id) {
+            productsChanged = true;
+            onlyStockChanged = false;
+            break;
+          }
+          if (op.sellingPrice !== np.sellingPrice || op.discountPrice !== np.discountPrice || op.status !== np.status || op.name !== np.name) {
+            productsChanged = true;
+            onlyStockChanged = false;
+            break;
+          }
+          if (op.stock !== np.stock) {
+            productsChanged = true;
+          }
+        }
+      }
+
+      // If silent background poll and only stock changed, update DOM stock badges directly without triggering full UI re-renders
+      if (silent && productsChanged && onlyStockChanged) {
+        store.state.products = newProducts;
+        store.computeFilteredProducts();
+        newProducts.forEach(np => {
+          const stockBadges = document.querySelectorAll(`[data-stock-count-for="${np.id}"]`);
+          stockBadges.forEach(el => {
+            el.textContent = `${np.stock} ${t('leftInStock')}`;
+            if (np.stock <= (np.minStockThreshold || 15)) {
+              el.classList.add('text-red-500');
+            } else {
+              el.classList.remove('text-red-500');
+            }
+          });
+        });
+        return; // Zero full-tree re-render: stops image reload/flicker and preserves inputs
+      }
+
+      // If silent background poll and nothing changed, return immediately!
+      if (silent && !productsChanged && state.user.role !== 'admin') {
+        return;
+      }
+
       let analytics = null;
       let txns = state.transactions || [];
       let users = state.users || [];
@@ -172,8 +226,16 @@ class App {
         }
       }
 
+      // Check if admin datasets changed before triggering setState
+      if (silent && !productsChanged) {
+        const txnsCountEqual = (state.transactions || []).length === txns.length;
+        if (txnsCountEqual) {
+          return; // No mutations detected
+        }
+      }
+
       store.setState({
-        products: prodRes.products || state.products,
+        products: newProducts,
         analytics: analytics || state.analytics,
         transactions: txns,
         users,

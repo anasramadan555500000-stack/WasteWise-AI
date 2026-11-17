@@ -181,9 +181,17 @@ export function computeFallbackAnalytics(products = INITIAL_FALLBACK_PRODUCTS) {
     }
   });
 
+  let markdownLoss = 0;
+  products.forEach(p => {
+    if (p.discountPrice && p.discountPrice < p.sellingPrice) {
+      markdownLoss += (p.sellingPrice - p.discountPrice) * (p.stock || 0);
+    }
+  });
+
   const simulatedRevenue = 49120.00;
   const simulatedCogs = 29574.00;
   const netProfit = Number((simulatedRevenue - simulatedCogs).toFixed(2));
+  const totalLosses = Number((expiredWasteLoss + atRiskWasteLoss + markdownLoss).toFixed(2));
 
   return {
     financials: {
@@ -194,7 +202,26 @@ export function computeFallbackAnalytics(products = INITIAL_FALLBACK_PRODUCTS) {
       totalInventoryValue: Number(totalInventoryValue.toFixed(2)),
       wasteLossEstimation: Number((expiredWasteLoss + atRiskWasteLoss).toFixed(2)),
       expiredWasteLoss: Number(expiredWasteLoss.toFixed(2)),
-      atRiskWasteLoss: Number(atRiskWasteLoss.toFixed(2))
+      atRiskWasteLoss: Number(atRiskWasteLoss.toFixed(2)),
+      markdownDiscountLoss: Number(markdownLoss.toFixed(2)),
+      totalLosses,
+      monthlyGrossRevenue: simulatedRevenue,
+      monthlyCogs: simulatedCogs,
+      monthlyNetProfit: netProfit,
+      monthlyProfitMarginPct: 39.8,
+      monthlyPnL: {
+        period: 'November 2026',
+        monthlyGrossRevenue: simulatedRevenue,
+        monthlyCogs: simulatedCogs,
+        monthlyNetProfit: netProfit,
+        monthlyProfitMarginPct: 39.8,
+        lossesBreakdown: {
+          expiredStockLoss: Number(expiredWasteLoss.toFixed(2)),
+          atRiskStockLoss: Number(atRiskWasteLoss.toFixed(2)),
+          markdownDiscountLoss: Number(markdownLoss.toFixed(2)),
+          totalLosses
+        }
+      }
     },
     inventoryOverview: {
       totalProducts: products.length,
@@ -246,6 +273,8 @@ class StateStore {
       products: initialProducts,
       filteredProducts: initialProducts,
       cart: [],
+      selectedTender: 'cash',
+      tenderedAmount: null,
       analytics: initialAnalytics,
       users: [],
       transactions: [],

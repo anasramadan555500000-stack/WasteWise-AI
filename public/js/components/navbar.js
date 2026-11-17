@@ -1,5 +1,5 @@
 // Header and Navigation Component
-// Decluttered, Single-Row Responsive Enterprise Design with Theme & Language Toggles
+// Enlarged Brand Logo, Visual Polish, Half-Life Expiry Notifications & Interactive Routing
 import { store } from '../state.js';
 import { api } from '../api.js';
 import { showToast } from './toast.js';
@@ -21,7 +21,7 @@ export function renderNavbar(container) {
   const isDark = isDarkMode();
   const rtl = isRTL();
 
-  // Compute active notifications
+  // Compute active notifications with 50% Half-Life & Critical Near-Expiry
   let dismissedAlerts = [];
   try {
     dismissedAlerts = JSON.parse(localStorage.getItem('wastewise_dismissed_alerts')) || [];
@@ -29,27 +29,64 @@ export function renderNavbar(container) {
 
   const activeAlerts = [];
   (products || []).forEach(p => {
-    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore);
-    if (expiry.status === 'expired' || expiry.status === 'warning') {
-      const alertId = `exp_${p.id}_${p.expiryDate}`;
+    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore, p.createdAt);
+
+    // 1. Critical Near-Expiry Alert (<= 2 days)
+    if (expiry.days <= 2 && expiry.days >= 0) {
+      const alertId = `crit_exp_${p.id}_${p.expiryDate}`;
       if (!dismissedAlerts.includes(alertId)) {
         activeAlerts.push({
           id: alertId,
           productId: p.id,
           productName: p.name,
-          type: 'expiry',
-          status: expiry.status,
-          severity: expiry.status === 'expired' ? 'critical' : 'warning',
-          title: expiry.status === 'expired' 
-            ? `${t('expired')}: ${p.name}` 
-            : `${t('warning')}: ${p.name}`,
+          type: 'critical_expiry',
+          status: 'critical',
+          severity: 'critical',
+          title: `🔴 ${t('criticalNearExpiry')}: ${p.name}`,
+          message: `${expiry.label} (${expiry.days}d remaining) • ${p.stock} ${t('leftInStock')}`,
+          icon: '🔴',
+          badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-bold border border-red-300 dark:border-red-800'
+        });
+      }
+    } 
+    // 2. Smart Half-Life Alert (50% of total shelf life reached, > 2 days)
+    else if (expiry.isHalfLife) {
+      const alertId = `halflife_${p.id}_${p.expiryDate}`;
+      if (!dismissedAlerts.includes(alertId)) {
+        activeAlerts.push({
+          id: alertId,
+          productId: p.id,
+          productName: p.name,
+          type: 'half_life',
+          status: 'warning',
+          severity: 'warning',
+          title: `⚡ ${t('halfLifeReached')}: ${p.name}`,
+          message: `${expiry.label} (${expiry.days}d left of ${expiry.totalDays}d shelf life) • ${p.stock} ${t('leftInStock')}`,
+          icon: '⚡',
+          badgeClass: 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800'
+        });
+      }
+    } 
+    // 3. Expired Alert (< 0 days)
+    else if (expiry.days < 0) {
+      const alertId = `past_exp_${p.id}_${p.expiryDate}`;
+      if (!dismissedAlerts.includes(alertId)) {
+        activeAlerts.push({
+          id: alertId,
+          productId: p.id,
+          productName: p.name,
+          type: 'expired',
+          status: 'expired',
+          severity: 'critical',
+          title: `⚠️ ${t('expired')}: ${p.name}`,
           message: `${expiry.label} • ${p.stock} ${t('leftInStock')}`,
-          icon: expiry.status === 'expired' ? '🔴' : '⚠️',
-          badgeClass: expiry.badgeClass
+          icon: '⛔',
+          badgeClass: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold border border-rose-300'
         });
       }
     }
 
+    // 4. Low-Stock Alert
     const minThreshold = p.minStockThreshold !== undefined ? p.minStockThreshold : (settings?.defaultMinStockThreshold || 15);
     if (p.stock <= minThreshold) {
       const alertId = `stock_${p.id}_${p.stock}`;
@@ -61,10 +98,10 @@ export function renderNavbar(container) {
           type: 'stock',
           status: 'low_stock',
           severity: p.stock <= 5 ? 'critical' : 'warning',
-          title: `${t('warning')}: ${p.name}`,
+          title: `📦 ${t('warning')}: ${p.name}`,
           message: `${p.stock} ${t('leftInStock')} (Min: ${minThreshold})`,
           icon: '📦',
-          badgeClass: p.stock <= 5 ? 'bg-red-100 text-red-700 font-bold border border-red-300' : 'bg-amber-100 text-amber-800 font-bold border border-amber-300'
+          badgeClass: p.stock <= 5 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-bold border border-red-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold border border-amber-300'
         });
       }
     }
@@ -73,59 +110,84 @@ export function renderNavbar(container) {
   const stationLabel = user.stationTitle ? user.stationTitle.split('•')[0].trim() : t('stationPrefix');
 
   container.innerHTML = `
-    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 ww-card-shadow transition-colors duration-200">
+    <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 ww-card-shadow transition-colors duration-200">
       <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16 gap-2 sm:gap-4">
+        <div class="flex items-center justify-between h-20 gap-2 sm:gap-4">
           
-          <!-- Left Section: Brand & Compact Role Pill -->
-          <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <img src="/logo.png" class="w-9 h-9 object-contain rounded-xl bg-slate-950 p-0.5 border border-emerald-500/30 shadow-md shadow-emerald-500/20 shrink-0" alt="WasteWise AI" onerror="this.onerror=null;this.src='/images/logo.png'" />
-            <div class="flex items-center gap-2">
-              <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-                ${t('brandTitle')} <span class="text-emerald-500">${t('brandAi')}</span>
-              </span>
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap hidden xs:inline-flex items-center ${isAdmin ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}">
-                ${isAdmin ? t('adminPanel') : t('posTerminal')}
+          <!-- Left Section: Prominent Enlarged Brand Logo & Identity -->
+          <div class="flex items-center gap-3 sm:gap-4 shrink-0">
+            <div class="relative group">
+              <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+              <img src="/logo.png" 
+                class="relative w-14 h-14 object-contain rounded-2xl bg-slate-950 p-1 border-2 border-emerald-500/40 shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform duration-300 shrink-0 cursor-pointer" 
+                alt="WasteWise AI" 
+                onerror="this.onerror=null;this.src='/images/logo.png'" />
+            </div>
+
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+                  ${t('brandTitle')} <span class="text-emerald-500">${t('brandAi')}</span>
+                </span>
+                <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap hidden xs:inline-flex items-center shadow-sm ${isAdmin ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'}">
+                  ${isAdmin ? t('adminPanel') : t('posTerminal')}
+                </span>
+              </div>
+              <span class="text-[11px] font-medium text-slate-400 hidden md:block">
+                ${t('authFooterSub')}
               </span>
             </div>
           </div>
 
-          <!-- Center Section: Compact Status & Switcher -->
-          <div class="flex items-center gap-2 shrink-0">
+          <!-- Center Section: Grouped Live Shift, Anchor Date & Status Pills -->
+          <div class="hidden sm:flex items-center gap-2 shrink-0">
+            <!-- Shift Badge -->
+            <div class="hidden xl:flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm">
+              <span>🌤️</span>
+              <span>${t('liveShift')}</span>
+            </div>
+
+            <!-- Anchor Date Pill -->
+            <div class="hidden lg:flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-mono font-bold text-slate-600 dark:text-slate-300 shadow-sm" title="Simulation Anchor Date">
+              <span>📅</span>
+              <span>${t('anchorDateLabel')}</span>
+            </div>
+
+            <!-- Live Cloud Badge -->
+            <div class="flex items-center gap-1.5 glass-pill px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm cursor-help" title="${t('cloudTooltip')}">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>${t('live')}</span>
+            </div>
+
+            <!-- Mode Switcher (Admin) or Station Badge (Cashier) -->
             ${isAdmin ? `
-              <div class="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl flex items-center gap-1 border border-slate-200 dark:border-slate-700">
-                <button id="nav-btn-admin-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${currentView === 'admin' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
+              <div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-inner">
+                <button id="nav-btn-admin-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer ${currentView === 'admin' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
                   📊 <span class="hidden md:inline">${t('controlCenter')}</span>
                 </button>
-                <button id="nav-btn-pos-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${currentView === 'cashier' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
+                <button id="nav-btn-pos-view" class="px-2.5 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer ${currentView === 'cashier' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}">
                   🛒 <span class="hidden md:inline">${t('posView')}</span>
                 </button>
               </div>
             ` : `
-              <div class="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap">
+              <div class="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>${stationLabel}</span>
               </div>
             `}
-
-            <!-- Compact Cloud Live Indicator -->
-            <div class="hidden lg:flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap cursor-help transition-colors" title="${t('cloudTooltip')}">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>${t('live')}</span>
-            </div>
           </div>
 
           <!-- Right Section: Language, Theme, Notifications & User Profile -->
-          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             
             <!-- 1. Language Switcher (AR / EN) -->
-            <button id="nav-btn-lang" class="px-2.5 py-1 text-xs font-extrabold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1 cursor-pointer" title="Switch Language / تغيير اللغة">
+            <button id="nav-btn-lang" class="px-3 py-1.5 text-xs font-black rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer" title="Switch Language / تغيير اللغة">
               <span>🌐</span>
-              <span class="font-bold tracking-wider">${currentLang === 'en' ? 'AR' : 'EN'}</span>
+              <span class="tracking-wider">${currentLang === 'en' ? 'AR' : 'EN'}</span>
             </button>
 
             <!-- 2. Dark/Light Theme Switcher -->
-            <button id="nav-btn-theme" class="p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer" title="${isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}">
+            <button id="nav-btn-theme" class="p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer shadow-sm" title="${isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}">
               ${isDark ? `
                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -137,9 +199,9 @@ export function renderNavbar(container) {
               `}
             </button>
 
-            <!-- 3. Notifications Bell Dropdown -->
+            <!-- 3. Smart Notifications Bell Dropdown -->
             <div class="relative" id="nav-notifications-wrapper">
-              <button id="nav-btn-notifications" class="relative p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer" title="${t('notifications')}">
+              <button id="nav-btn-notifications" class="relative p-2.5 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer shadow-sm" title="${t('notifications')}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
@@ -163,7 +225,7 @@ export function renderNavbar(container) {
                     </span>
                   </div>
                   ${activeAlerts.length > 0 ? `
-                    <button id="nav-btn-dismiss-all" class="text-[11px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors">
+                    <button id="nav-btn-dismiss-all" class="text-[11px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors cursor-pointer">
                       ${t('markAllRead')}
                     </button>
                   ` : ''}
@@ -183,12 +245,17 @@ export function renderNavbar(container) {
                         <div class="min-w-0">
                           <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${alert.title}</div>
                           <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">${alert.message}</div>
-                          <span class="inline-block mt-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded ${alert.badgeClass}">
-                            ${alert.type.toUpperCase()}
-                          </span>
+                          <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${alert.badgeClass}">
+                              ${alert.type.toUpperCase().replace('_', ' ')}
+                            </span>
+                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                              ${t('viewInInventory')} &rarr;
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <button class="notification-dismiss-btn p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" data-alert-id="${alert.id}" title="Dismiss">
+                      <button class="notification-dismiss-btn p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer" data-alert-id="${alert.id}" title="Dismiss">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                       </button>
                     </div>
@@ -198,19 +265,27 @@ export function renderNavbar(container) {
             </div>
 
             <!-- 4. User Profile Trigger (Compact Avatar + Name) -->
-            <button id="nav-btn-profile" class="flex items-center gap-1.5 sm:gap-2 ${rtl ? 'pr-1.5 sm:pr-2 border-r' : 'pl-1.5 sm:pl-2 border-l'} border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 p-1 rounded-xl transition-all cursor-pointer group shrink-0" title="${t('profile')}">
-              <img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}" alt="${user.name}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-emerald-500/20 group-hover:ring-emerald-500 transition-all shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'" />
-              <div class="hidden sm:block text-start">
-                <div class="text-xs font-bold text-slate-900 dark:text-white leading-tight group-hover:text-emerald-500 transition-colors truncate max-w-[110px]">
-                  ${user.name.split(' ')[0]}
-                </div>
+            <button id="nav-btn-profile" class="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-sm" title="${t('profile')}">
+              <img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}" 
+                alt="${user.name}" 
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover ring-2 ring-emerald-500/20 shrink-0" 
+                onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'" />
+              
+              <div class="hidden md:flex flex-col text-start">
+                <span class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[110px] leading-tight">${user.name}</span>
+                <span class="text-[10px] text-slate-400 capitalize leading-none">${user.role}</span>
               </div>
-              <svg class="w-3 h-3 text-slate-400 group-hover:text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+
+              <svg class="w-3.5 h-3.5 text-slate-400 hidden sm:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
             </button>
 
             <!-- 5. Sign Out Button -->
-            <button id="nav-btn-logout" class="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0" title="${t('signOut')}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <button id="nav-btn-logout" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all cursor-pointer shadow-sm" title="${t('signOut')}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
             </button>
 
           </div>
@@ -220,30 +295,23 @@ export function renderNavbar(container) {
     </header>
   `;
 
-  // Attach Event Listeners
-  // Admin View Switcher
+  // Attach Event Handlers
   const adminViewBtn = container.querySelector('#nav-btn-admin-view');
+  const posViewBtn = container.querySelector('#nav-btn-pos-view');
+
   if (adminViewBtn) {
     adminViewBtn.addEventListener('click', () => {
-      store.setState({
-        currentView: 'admin',
-        filters: { category: 'All', status: 'all', search: '' }
-      });
+      store.setState({ currentView: 'admin', adminTab: 'inventory' });
     });
   }
 
-  // POS View Switcher
-  const posViewBtn = container.querySelector('#nav-btn-pos-view');
   if (posViewBtn) {
     posViewBtn.addEventListener('click', () => {
-      store.setState({
-        currentView: 'cashier',
-        filters: { category: 'All', status: 'all', search: '' }
-      });
+      store.setState({ currentView: 'cashier' });
     });
   }
 
-  // Language Toggle
+  // Language Switcher Handler
   const langBtn = container.querySelector('#nav-btn-lang');
   if (langBtn) {
     langBtn.addEventListener('click', () => {
@@ -251,7 +319,7 @@ export function renderNavbar(container) {
     });
   }
 
-  // Theme Toggle
+  // Theme Switcher Handler
   const themeBtn = container.querySelector('#nav-btn-theme');
   if (themeBtn) {
     themeBtn.addEventListener('click', () => {
@@ -267,7 +335,7 @@ export function renderNavbar(container) {
     });
   }
 
-  // Notifications Bell Toggle & Actions
+  // Notifications Bell Toggle & Interactive Item Routing
   const notifBtn = container.querySelector('#nav-btn-notifications');
   const notifDropdown = container.querySelector('#nav-notifications-dropdown');
   const notifWrapper = container.querySelector('#nav-notifications-wrapper');
@@ -315,18 +383,17 @@ export function renderNavbar(container) {
         const product = products.find(p => p.id === prodId);
         if (product) {
           notifDropdown.classList.add('hidden');
-          if (isAdmin) {
-            sessionStorage.setItem('wastewise_admin_tab', 'inventory');
-            store.setState({
-              currentView: 'admin',
-              adminTab: 'inventory',
-              filters: { category: 'All', status: 'all', search: product.name }
-            });
-          } else {
-            store.setState({
-              filters: { category: 'All', status: 'all', search: product.name }
-            });
-          }
+          sessionStorage.setItem('wastewise_admin_tab', 'inventory');
+          store.setState({
+            currentView: 'admin',
+            adminTab: 'inventory',
+            filters: { category: 'All', status: 'all', search: product.name }
+          });
+
+          // Dispatch pulse highlight event for target row in admin view
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('wastewise:highlightProduct', { detail: { productId: prodId } }));
+          }, 150);
         }
       });
     });

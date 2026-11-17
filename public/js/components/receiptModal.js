@@ -32,9 +32,9 @@ export function renderReceiptModal(transaction) {
         <!-- Printable Area (White thermal ticket appearance) -->
         <div id="printable-receipt" class="space-y-4 font-mono text-slate-800 bg-white p-4 rounded-2xl border border-slate-200 shadow-inner">
           
-          <!-- Store Header & Official Logo -->
+          <!-- Store Header & Official Logo (Enlarged for Crisp Thermal Receipts) -->
           <div class="text-center pb-3 border-b-2 border-dashed border-slate-200">
-            <img src="/logo.png" alt="WasteWise AI" class="w-16 h-16 mx-auto mb-2 object-contain grayscale rounded-xl bg-slate-950 p-1 border border-slate-300 shadow-sm" onerror="this.onerror=null;this.src='/images/logo.png'" />
+            <img src="/logo.png" alt="WasteWise AI" class="w-20 h-20 mx-auto mb-2 object-contain grayscale rounded-2xl bg-slate-950 p-1.5 border border-slate-300 shadow-sm hover:grayscale-0 transition-all" onerror="this.onerror=null;this.src='/images/logo.png'" />
             <div class="text-xs uppercase tracking-widest text-emerald-600 font-extrabold">${restaurantName}</div>
             <div class="text-[11px] font-bold text-slate-700 mt-0.5">${branchName}</div>
             <div class="text-[10px] text-slate-500">${address}</div>
