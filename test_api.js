@@ -337,11 +337,11 @@ async function runTests() {
     }
     console.log('       -> Token Invalidation: SUCCESS (Revoked token rejected with 401)');
 
-    // 16. Test Brute-Force Rate Limiting (max 10 attempts per 15 min)
+    // 16. Test Brute-Force Rate Limiting (max 30 attempts per 5 min)
     console.log('[16/16] Testing Brute-Force Rate Limiting on /api/auth/login...');
     authLimiter.clearAll();
     let got429 = false;
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 32; i++) {
       const res = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,7 +354,7 @@ async function runTests() {
       }
     }
     if (!got429) {
-      throw new Error('Rate limiter failed to block after 10 requests!');
+      throw new Error('Rate limiter failed to block after 30 requests!');
     }
     console.log('       -> Brute-Force Rate Limiter: SUCCESS (429 verified)');
 

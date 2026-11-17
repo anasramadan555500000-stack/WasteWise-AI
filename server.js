@@ -17,6 +17,10 @@ const app = express();
 // Trust reverse proxies (Vercel, AWS API Gateway, Cloudflare) for accurate req.ip
 app.set('trust proxy', 1);
 
+// Reset / clear all in-memory rate-limit counters on server boot
+authLimiter.clearAll();
+checkoutLimiter.clearAll();
+
 // Security Headers Middleware
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');

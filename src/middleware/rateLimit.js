@@ -4,7 +4,8 @@
  */
 const { getClientIp } = require('../utils/ip');
 
-function createRateLimiter({ windowMs, maxRequests, message }) {
+function createRateLimiter({ windowMs = 5 * 60 * 1000, maxRequests, max, message, skipSuccessfulRequests = false }) {
+  const limit = max || maxRequests || 30;
   const ipRequests = new Map();
 
   // Periodically clean up expired entries every 2 minutes
@@ -24,18 +25,28 @@ function createRateLimiter({ windowMs, maxRequests, message }) {
 
     let record = ipRequests.get(ip);
     if (!record || now - record.windowStart > windowMs) {
-      record = { windowStart: now, count: 1 };
+      record = { windowStart: now, count: 0 };
       ipRequests.set(ip, record);
-      return next();
     }
 
-    record.count++;
-    if (record.count > maxRequests) {
+    if (record.count >= limit) {
       const retryAfterSeconds = Math.ceil((record.windowStart + windowMs - now) / 1000);
       res.setHeader('Retry-After', retryAfterSeconds);
       return res.status(429).json({
         success: false,
-        error: message || 'Too many requests. Please try again later.'
+        error: message || 'Too many login attempts from this IP. Please try again in 5 minutes.'
+      });
+    }
+
+    // Increment attempt counter
+    record.count++;
+
+    // Only count failed attempts when skipSuccessfulRequests is true
+    if (skipSuccessfulRequests) {
+      res.on('finish', () => {
+        if (res.statusCode < 400 && record) {
+          record.count = Math.max(0, record.count - 1);
+        }
       });
     }
 
@@ -53,19 +64,26 @@ function createRateLimiter({ windowMs, maxRequests, message }) {
   return limiter;
 }
 
-// Auth: max 10 attempts per 15 minutes per IP
+// Auth Rate Limiter: 30 attempts per 5 minutes per IP, skip successful logins
 const authLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  maxRequests: 10,
-  message: 'Too many login attempts from this IP. Please try again in 15 minutes.'
+  windowMs: 5 * 60 * 1000,
+  max: 30,
+  maxRequests: 30,
+  skipSuccessfulRequests: true,
+  message: 'Too many login attempts from this IP. Please try again in 5 minutes.'
 });
 
-// Checkout: max 30 requests per 1 minute per IP
+// Checkout Rate Limiter: max 30 requests per 1 minute per IP
 const checkoutLimiter = createRateLimiter({
   windowMs: 60 * 1000,
+  max: 30,
   maxRequests: 30,
   message: 'Checkout rate limit exceeded. Please wait before submitting more orders.'
 });
+
+// Reset / clear all in-memory counters on server boot
+authLimiter.clearAll();
+checkoutLimiter.clearAll();
 
 module.exports = {
   createRateLimiter,
