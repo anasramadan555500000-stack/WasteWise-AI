@@ -23,8 +23,25 @@ function renderInventoryRowsHtml(filteredProducts) {
   }
 
   return filteredProducts.map(p => {
-    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore);
+    const prodDate = p.productionDate || p.production_date;
+    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore, prodDate);
     const isPulse = expiry.isPulse;
+
+    let stageBadgeText = expiry.status.toUpperCase();
+    let stageDotColor = 'bg-emerald-500';
+    if (expiry.stage === 'EXPIRED') {
+      stageBadgeText = 'EXPIRED';
+      stageDotColor = 'bg-red-500';
+    } else if (expiry.stage === 'FINAL_48H_ESCALATION') {
+      stageBadgeText = 'ESCALATION (3X/D)';
+      stageDotColor = 'bg-red-500 animate-pulse';
+    } else if (expiry.stage === 'HALF_LIFE_ALERT') {
+      stageBadgeText = 'HALF-LIFE (50%)';
+      stageDotColor = 'bg-amber-500 animate-pulse';
+    } else if (expiry.stage === 'FRESH') {
+      stageBadgeText = 'FRESH (SAFE)';
+      stageDotColor = 'bg-emerald-500';
+    }
 
     return `
       <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors ${isPulse ? 'pulse-warning bg-amber-50/30' : ''}" data-product-id="${p.id}">
@@ -76,6 +93,7 @@ function renderInventoryRowsHtml(filteredProducts) {
         <!-- Expiry Date & Countdown -->
         <td class="py-3.5 px-4">
           <div class="text-xs font-medium text-slate-700 dark:text-slate-300">${formatDate(p.expiryDate)}</div>
+          <div class="text-[10px] text-slate-400">Batch: ${formatDate(prodDate || p.createdAt)}</div>
           <div class="text-[11px] ${expiry.status === 'expired' ? 'text-red-500 font-bold' : (expiry.status === 'warning' ? 'text-amber-600 font-bold' : 'text-slate-400')}">
             ${expiry.label}
           </div>
@@ -84,8 +102,8 @@ function renderInventoryRowsHtml(filteredProducts) {
         <!-- Live Status Badge -->
         <td class="py-3.5 px-4">
           <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${expiry.badgeClass}">
-            <span class="w-1.5 h-1.5 rounded-full ${expiry.status === 'expired' ? 'bg-red-500' : (expiry.status === 'warning' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500')}"></span>
-            <span>${expiry.status.toUpperCase()}</span>
+            <span class="w-1.5 h-1.5 rounded-full ${stageDotColor}"></span>
+            <span>${stageBadgeText}</span>
           </span>
         </td>
 

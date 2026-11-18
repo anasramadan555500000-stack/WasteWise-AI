@@ -1,7 +1,9 @@
 // Add / Edit Product Modal Component
+// Multi-Stage Expiry & Reminder Engine with Dual-Date Inputs & Live Preview
 import { api } from '../api.js';
 import { showToast } from './toast.js';
 import { t, isRTL } from '../utils/i18n.js';
+import { ANCHOR_DATE, normalizeUtcMidnight } from '../utils/formatters.js';
 
 const PRESET_IMAGES = [
   { label: 'Bucket', url: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80' },
@@ -22,6 +24,9 @@ export function renderProductModal(product = null) {
     modalContainer.id = modalId;
     document.body.appendChild(modalContainer);
   }
+
+  const initialProdDate = product ? (product.productionDate || product.production_date || ANCHOR_DATE) : ANCHOR_DATE;
+  const initialExpDate = product ? (product.expiryDate || product.expiry_date || '2026-11-22') : '2026-11-22';
 
   modalContainer.innerHTML = `
     <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 modal-backdrop animate-in fade-in duration-200">
@@ -86,21 +91,45 @@ export function renderProductModal(product = null) {
             </div>
           </div>
 
-          <!-- Stock & Expiry Date -->
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">${t('initialStock')} *</label>
-              <input type="number" min="0" id="prod-stock" required value="${product ? product.stock : '20'}"
-                class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-slate-100" />
+          <!-- Initial Stock Units -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">${t('initialStock')} *</label>
+            <input type="number" min="0" id="prod-stock" required value="${product ? product.stock : '20'}"
+              class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 dark:text-slate-100" />
+          </div>
+
+          <!-- Dual Date Inputs: Production / Batch Date & Expiry Date -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>${t('dualDateSchedule')}</span>
+              </label>
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full">
+                AI Expiry Engine
+              </span>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">${t('expiryDate')} *</label>
-              <input type="date" id="prod-expiry" required value="${product ? product.expiryDate : '2026-11-17'}"
-                class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-slate-100" />
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">${t('productionDate')} *</label>
+                <input type="date" id="prod-production-date" required value="${initialProdDate}"
+                  class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-slate-100 font-medium" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">${t('expiryDate')} *</label>
+                <input type="date" id="prod-expiry-date" required value="${initialExpDate}"
+                  class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-slate-100 font-medium" />
+              </div>
+            </div>
+
+            <!-- Live Shelf-Life Preview Badge -->
+            <div id="shelf-life-preview" class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs transition-all space-y-1">
+              <!-- Dynamically populated via updateShelfLifePreview() -->
             </div>
           </div>
 
-          <!-- Alert Days Threshold -->
+          <!-- Alert Days Threshold & Barcode -->
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">${t('alertWindow')}</label>
@@ -151,6 +180,66 @@ export function renderProductModal(product = null) {
   const cancelBtn = modalContainer.querySelector('#modal-btn-cancel');
   const form = modalContainer.querySelector('#product-form');
   const imageInput = modalContainer.querySelector('#prod-image');
+  const prodDateInput = modalContainer.querySelector('#prod-production-date');
+  const expDateInput = modalContainer.querySelector('#prod-expiry-date');
+  const previewBox = modalContainer.querySelector('#shelf-life-preview');
+  const submitBtn = modalContainer.querySelector('#modal-btn-submit');
+
+  function updateShelfLifePreview() {
+    if (!prodDateInput || !expDateInput || !previewBox) return;
+
+    const prodVal = prodDateInput.value;
+    const expVal = expDateInput.value;
+
+    if (!prodVal || !expVal) {
+      previewBox.innerHTML = `<span class="text-slate-400">Please choose both dates.</span>`;
+      return;
+    }
+
+    const prodMidnight = normalizeUtcMidnight(prodVal);
+    const expMidnight = normalizeUtcMidnight(expVal);
+
+    if (!prodMidnight || !expMidnight) {
+      previewBox.innerHTML = `<span class="text-slate-400">Invalid date format.</span>`;
+      return;
+    }
+
+    const diffDays = Math.round((expMidnight.getTime() - prodMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      previewBox.className = 'p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 text-xs text-red-600 dark:text-red-300 font-bold';
+      previewBox.innerHTML = `⚠️ ${t('expiryMustBeAfterProduction')}`;
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    if (submitBtn) submitBtn.disabled = false;
+
+    const halfLifeDay = Math.floor(diffDays / 2);
+    previewBox.className = 'p-2.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs transition-all space-y-1.5';
+    previewBox.innerHTML = `
+      <div class="flex items-center justify-between text-slate-800 dark:text-slate-200 font-bold">
+        <span>🗓️ ${t('totalShelfLife')}: <span class="text-emerald-600 dark:text-emerald-400">${diffDays} Days</span></span>
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold">Healthy Range</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-100 dark:border-emerald-900/40">
+        <div class="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-medium">
+          <span>⚡</span>
+          <span>50% Half-Life on Day ${halfLifeDay}</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-red-700 dark:text-red-300 font-medium">
+          <span>🔥</span>
+          <span>Final 48h Escalation (3x / day)</span>
+        </div>
+      </div>
+    `;
+  }
+
+  prodDateInput?.addEventListener('input', updateShelfLifePreview);
+  prodDateInput?.addEventListener('change', updateShelfLifePreview);
+  expDateInput?.addEventListener('input', updateShelfLifePreview);
+  expDateInput?.addEventListener('change', updateShelfLifePreview);
+  updateShelfLifePreview();
 
   function closeModal() {
     modalContainer.innerHTML = '';
@@ -171,6 +260,14 @@ export function renderProductModal(product = null) {
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const productionDate = prodDateInput.value;
+    const expiryDate = expDateInput.value;
+
+    if (new Date(expiryDate).getTime() <= new Date(productionDate).getTime()) {
+      showToast(t('expiryMustBeAfterProduction'), 'warning');
+      return;
+    }
+
     const payload = {
       name: modalContainer.querySelector('#prod-name').value,
       category: modalContainer.querySelector('#prod-category').value,
@@ -178,7 +275,10 @@ export function renderProductModal(product = null) {
       costPrice: parseFloat(modalContainer.querySelector('#prod-cost').value) || 0,
       sellingPrice: parseFloat(modalContainer.querySelector('#prod-selling').value) || 0,
       stock: parseInt(modalContainer.querySelector('#prod-stock').value, 10) || 0,
-      expiryDate: modalContainer.querySelector('#prod-expiry').value,
+      productionDate,
+      production_date: productionDate,
+      expiryDate,
+      expiry_date: expiryDate,
       alertDaysBefore: parseInt(modalContainer.querySelector('#prod-alert-days').value, 10) || 2,
       barcode: modalContainer.querySelector('#prod-barcode').value,
       image: imageInput.value

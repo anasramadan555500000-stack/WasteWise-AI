@@ -29,11 +29,12 @@ function validateLogin(req, res, next) {
 }
 
 function validateProduct(req, res, next) {
-  let { name, category, costPrice, sellingPrice, price, stock, expiryDate, expiry_date, alertDaysBefore, image, image_url } = req.body || {};
+  let { name, category, costPrice, sellingPrice, price, stock, expiryDate, expiry_date, productionDate, production_date, alertDaysBefore, image, image_url } = req.body || {};
 
   // Harmonize Supabase column aliases
   sellingPrice = sellingPrice !== undefined ? sellingPrice : price;
   expiryDate = expiryDate || expiry_date;
+  productionDate = productionDate || production_date;
   image = image || image_url;
 
   if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
@@ -56,6 +57,24 @@ function validateProduct(req, res, next) {
     return res.status(400).json({ success: false, error: 'Valid expiry date (YYYY-MM-DD) is required.' });
   }
 
+  // Dual Date Validation: If productionDate is provided, expiryDate must be strictly after productionDate
+  if (productionDate) {
+    if (isNaN(Date.parse(productionDate))) {
+      return res.status(400).json({ success: false, error: 'Valid production date (YYYY-MM-DD) is required.' });
+    }
+    const expTime = new Date(expiryDate).getTime();
+    const prodTime = new Date(productionDate).getTime();
+    if (expTime <= prodTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Expiry date must be strictly after production/batch date.'
+      });
+    }
+  } else {
+    // Default productionDate to anchor date or 8 days prior to expiry
+    productionDate = config.SIMULATED_CURRENT_DATE;
+  }
+
   // Reject creating product with already expired date relative to system anchor date
   const daysUntilExpiry = calculateDaysUntilExpiry(expiryDate, config.SIMULATED_CURRENT_DATE);
   if (daysUntilExpiry <= 0) {
@@ -74,6 +93,8 @@ function validateProduct(req, res, next) {
   req.body.category = sanitizeString(category || 'General');
   req.body.sellingPrice = Number(sellingPrice);
   req.body.price = Number(sellingPrice);
+  req.body.productionDate = productionDate;
+  req.body.production_date = productionDate;
   req.body.expiryDate = expiryDate;
   req.body.expiry_date = expiryDate;
   req.body.image = image || 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';

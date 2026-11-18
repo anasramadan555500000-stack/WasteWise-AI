@@ -36,7 +36,8 @@ const defaultProducts = [
     discountPrice: null,
     stock: 45,
     minStockThreshold: 15,
-    expiryDate: '2026-11-19', // 4 days left -> Safe (Green)
+    productionDate: '2026-11-11', // 8 days total shelf life (4d elapsed, 4d left -> 50% Half-Life)
+    expiryDate: '2026-11-19', // 4 days left -> Half-Life Alert (Amber)
     alertDaysBefore: 2,
     barcode: '622100100101',
     image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
@@ -52,7 +53,8 @@ const defaultProducts = [
     discountPrice: null,
     stock: 120,
     minStockThreshold: 30,
-    expiryDate: '2026-11-17', // 2 days left -> Warning (Amber, triggers expiration alert & pulse)
+    productionDate: '2026-11-10', // 7 days total shelf life
+    expiryDate: '2026-11-17', // 2 days left -> Final 48h Escalation (Red warning, 3x/day)
     alertDaysBefore: 2,
     barcode: '622100100102',
     image: 'https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&auto=format&fit=crop&q=80',
@@ -68,7 +70,8 @@ const defaultProducts = [
     discountPrice: null,
     stock: 200,
     minStockThreshold: 50,
-    expiryDate: '2026-11-20', // 5 days left -> Safe (Green)
+    productionDate: '2026-11-14', // 6 days total shelf life
+    expiryDate: '2026-11-20', // 5 days left -> Fresh (Green)
     alertDaysBefore: 2,
     barcode: '622100100103',
     image: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=600&auto=format&fit=crop&q=80',
@@ -84,7 +87,8 @@ const defaultProducts = [
     discountPrice: null,
     stock: 80,
     minStockThreshold: 20,
-    expiryDate: '2026-11-16', // 1 day left -> Critical Expiry (Red)
+    productionDate: '2026-11-12', // 4 days total shelf life
+    expiryDate: '2026-11-16', // 1 day left -> Final 48h Escalation / Critical Expiry (Red)
     alertDaysBefore: 2,
     barcode: '622100100104',
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
@@ -100,7 +104,8 @@ const defaultProducts = [
     discountPrice: null,
     stock: 150,
     minStockThreshold: 35,
-    expiryDate: '2026-11-25', // 10 days left -> Safe (Green)
+    productionDate: '2026-11-05', // 20 days total shelf life (10d elapsed, 10d left -> 50% Half-Life)
+    expiryDate: '2026-11-25', // 10 days left -> Half-Life Alert (Amber)
     alertDaysBefore: 2,
     barcode: '622100100105',
     image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&auto=format&fit=crop&q=80',
@@ -116,6 +121,7 @@ const defaultProducts = [
     discountPrice: null,
     stock: 300,
     minStockThreshold: 60,
+    productionDate: '2026-05-15', // 1 year shelf life
     expiryDate: '2027-01-14', // 60 days left -> Safe (Green)
     alertDaysBefore: 2,
     barcode: '622100100106',

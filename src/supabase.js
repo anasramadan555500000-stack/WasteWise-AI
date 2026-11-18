@@ -27,6 +27,7 @@ function mapSupabaseRowToProduct(row) {
   const discountPrice = row.discount_price !== null && row.discount_price !== undefined ? Number(row.discount_price) : null;
   const stock = parseInt(row.stock, 10) || 0;
   const expiryDate = row.expiry_date || row.expiryDate;
+  const productionDate = row.production_date || row.productionDate || '2026-11-15';
   const image = row.image_url || row.image || 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';
 
   return {
@@ -40,6 +41,8 @@ function mapSupabaseRowToProduct(row) {
     discountPrice,
     stock,
     minStockThreshold: 15,
+    productionDate,
+    production_date: productionDate,
     expiryDate,
     expiry_date: expiryDate,
     alertDaysBefore: parseInt(row.alert_days_before || 2, 10),
@@ -57,6 +60,7 @@ function mapProductToSupabaseRow(product) {
   if (!product) return null;
   const price = Number(product.discountPrice !== null && product.discountPrice !== undefined ? product.discountPrice : (product.price || product.sellingPrice || 0));
   const expiryDate = product.expiryDate || product.expiry_date;
+  const productionDate = product.productionDate || product.production_date;
   const image = product.image || product.image_url;
 
   return {
@@ -65,6 +69,7 @@ function mapProductToSupabaseRow(product) {
     category: String(product.category || 'General'),
     price,
     stock: parseInt(product.stock, 10) || 0,
+    production_date: productionDate,
     expiry_date: expiryDate,
     image_url: image,
     cost_price: Number(product.costPrice || 0)

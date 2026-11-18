@@ -247,6 +247,7 @@ function addProduct(productData, auditUser = null) {
   const db = loadDb();
   const sellingPrice = Number(productData.price || productData.sellingPrice) || 0;
   const expiryDate = productData.expiry_date || productData.expiryDate;
+  const productionDate = productData.production_date || productData.productionDate || config.SIMULATED_CURRENT_DATE;
   const image = productData.image_url || productData.image || 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80';
 
   const newProduct = {
@@ -260,6 +261,8 @@ function addProduct(productData, auditUser = null) {
     discountPrice: productData.discountPrice ? Number(productData.discountPrice) : null,
     stock: parseInt(productData.stock, 10) || 0,
     minStockThreshold: parseInt(productData.minStockThreshold, 10) || 15,
+    productionDate,
+    production_date: productionDate,
     expiryDate,
     expiry_date: expiryDate,
     alertDaysBefore: parseInt(productData.alertDaysBefore, 10) || 2,
@@ -295,6 +298,7 @@ function updateProduct(id, updateData, auditUser = null) {
   const existing = db.products[index];
   const sellingPrice = updateData.price !== undefined ? Number(updateData.price) : (updateData.sellingPrice !== undefined ? Number(updateData.sellingPrice) : existing.sellingPrice);
   const expiryDate = updateData.expiry_date || updateData.expiryDate || existing.expiryDate;
+  const productionDate = updateData.production_date || updateData.productionDate || existing.productionDate || config.SIMULATED_CURRENT_DATE;
   const image = updateData.image_url || updateData.image || existing.image;
 
   const updated = {
@@ -307,6 +311,8 @@ function updateProduct(id, updateData, auditUser = null) {
     discountPrice: updateData.discountPrice !== undefined ? (updateData.discountPrice ? Number(updateData.discountPrice) : null) : existing.discountPrice,
     stock: updateData.stock !== undefined ? parseInt(updateData.stock, 10) : existing.stock,
     minStockThreshold: updateData.minStockThreshold !== undefined ? parseInt(updateData.minStockThreshold, 10) : existing.minStockThreshold,
+    productionDate,
+    production_date: productionDate,
     expiryDate,
     expiry_date: expiryDate,
     image,

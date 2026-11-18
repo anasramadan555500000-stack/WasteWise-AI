@@ -38,115 +38,151 @@ export function formatDateTime(isoString) {
   });
 }
 
-export function calculateExpiry(expiryDateStr, alertDaysBefore = 2, createdAtStr = null) {
-  const refMidnight = normalizeUtcMidnight(ANCHOR_DATE);
-  const expMidnight = normalizeUtcMidnight(expiryDateStr);
+/**
+ * Evaluates product lifecycle across 4 distinct stages:
+ * 1. EXPIRED (remainingMs <= 0)
+ * 2. FINAL_48H_ESCALATION (0 < daysRemaining <= 2) -> 3x / day reminders
+ * 3. HALF_LIFE_ALERT (progressRatio >= 0.50 and daysRemaining > 2)
+ * 4. FRESH (progressRatio < 0.50 and daysRemaining > 2)
+ */
+export function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDateInput = ANCHOR_DATE) {
+  const refMidnight = normalizeUtcMidnight(referenceDateInput) || normalizeUtcMidnight(new Date());
+  const expMidnight = normalizeUtcMidnight(expiryDateInput);
 
   if (!expMidnight || !refMidnight) {
     return {
       status: 'safe',
+      stage: 'FRESH',
       days: 99,
+      daysRemaining: 99,
       totalDays: 8,
+      totalShelfDays: 8,
+      progressRatio: 0,
+      progressPct: 0,
+      slot: 'morning',
+      slotLabel: 'Morning Reminder (09:00)',
       isHalfLife: false,
+      isEscalation: false,
       isCriticalNearExpiry: false,
       label: 'Safe',
       badgeClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold',
-      isPulse: false,
-      progressPct: 100
+      isPulse: false
     };
   }
 
-  const diffMs = expMidnight.getTime() - refMidnight.getTime();
-  const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  // If production date is missing, estimate standard 8-day batch
+  const prodMidnight = normalizeUtcMidnight(productionDateInput) || new Date(expMidnight.getTime() - (8 * 24 * 60 * 60 * 1000));
+  
+  const totalDurationMs = Math.max(24 * 60 * 60 * 1000, expMidnight.getTime() - prodMidnight.getTime());
+  const remainingMs = expMidnight.getTime() - refMidnight.getTime();
+  const days = Math.round(remainingMs / (1000 * 60 * 60 * 24));
+  const totalDays = Math.max(1, Math.round(totalDurationMs / (1000 * 60 * 60 * 24)));
 
-  // Half-life calculation (track createdAt or estimate 8-day batch shelf life)
-  const createdMidnight = normalizeUtcMidnight(createdAtStr) || new Date(expMidnight.getTime() - (8 * 24 * 60 * 60 * 1000));
-  const totalDays = Math.max(1, Math.round((expMidnight.getTime() - createdMidnight.getTime()) / (1000 * 60 * 60 * 24)));
-  const halfLifeThreshold = Math.floor(totalDays / 2);
-  const isHalfLife = days <= halfLifeThreshold && days > 2;
-  const isCriticalNearExpiry = days <= 2 && days >= 0;
+  const elapsedMs = Math.max(0, refMidnight.getTime() - prodMidnight.getTime());
+  const progressRatio = Math.min(1.0, Math.max(0.0, elapsedMs / totalDurationMs));
+  const progressPct = Math.round(progressRatio * 100);
 
-  if (days < 0) {
-    return {
-      status: 'expired',
-      days,
-      totalDays,
-      isHalfLife: false,
-      isCriticalNearExpiry: false,
-      label: `Expired ${Math.abs(days)}d ago`,
-      badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 font-bold',
-      isPulse: false,
-      progressPct: 0
-    };
+  // Time slot for 3 reminders per day (Morning 09:00, Afternoon 15:00, Evening 21:00)
+  const currentHour = new Date().getHours();
+  let slot = 'morning';
+  let slotLabel = 'Morning Reminder (09:00)';
+  if (currentHour >= 12 && currentHour < 18) {
+    slot = 'afternoon';
+    slotLabel = 'Afternoon Reminder (15:00)';
+  } else if (currentHour >= 18) {
+    slot = 'evening';
+    slotLabel = 'Evening Reminder (21:00)';
   }
 
-  if (days === 0) {
+  // Stage 1: EXPIRED (remainingMs <= 0)
+  if (days <= 0) {
     return {
       status: 'expired',
+      stage: 'EXPIRED',
       days,
+      daysRemaining: days,
       totalDays,
+      totalShelfDays: totalDays,
+      progressRatio: 1.0,
+      progressPct: 100,
+      slot,
+      slotLabel,
       isHalfLife: false,
+      isEscalation: false,
       isCriticalNearExpiry: true,
-      label: 'Expires Today!',
+      label: days === 0 ? 'Expires Today!' : `Expired ${Math.abs(days)}d ago`,
       badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 font-bold',
-      isPulse: true,
-      progressPct: 10
+      isPulse: true
     };
   }
 
-  if (days === 1) {
+  // Stage 2: FINAL_48H_ESCALATION (0 < daysRemaining <= 2)
+  if (days <= 2) {
     return {
-      status: 'expired',
+      status: days === 1 ? 'expired' : 'warning',
+      stage: 'FINAL_48H_ESCALATION',
       days,
+      daysRemaining: days,
       totalDays,
+      totalShelfDays: totalDays,
+      progressRatio,
+      progressPct,
+      slot,
+      slotLabel,
       isHalfLife: false,
+      isEscalation: true,
       isCriticalNearExpiry: true,
-      label: 'Critical: 1d Left',
-      badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 font-bold',
-      isPulse: true,
-      progressPct: 20
+      label: days === 1 ? `Critical: 1d Left (${slotLabel})` : `Warning: 2d Left (${slotLabel})`,
+      badgeClass: 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 font-extrabold pulse-warning',
+      isPulse: true
     };
   }
 
-  if (days === 2) {
+  // Stage 3: HALF_LIFE_ALERT (progressRatio >= 0.50 and daysRemaining > 2)
+  if (progressRatio >= 0.50) {
     return {
       status: 'warning',
+      stage: 'HALF_LIFE_ALERT',
       days,
+      daysRemaining: days,
       totalDays,
-      isHalfLife: false,
-      isCriticalNearExpiry: true,
-      label: 'Warning: 2d Left',
-      badgeClass: 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 badge-warning-glow font-bold',
-      isPulse: true,
-      progressPct: 40
-    };
-  }
-
-  if (isHalfLife) {
-    return {
-      status: 'warning',
-      days,
-      totalDays,
+      totalShelfDays: totalDays,
+      progressRatio,
+      progressPct,
+      slot,
+      slotLabel,
       isHalfLife: true,
+      isEscalation: false,
       isCriticalNearExpiry: false,
       label: `Half-Life (50%): ${days}d Left`,
       badgeClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-bold',
-      isPulse: true,
-      progressPct: Math.round((days / totalDays) * 100)
+      isPulse: true
     };
   }
 
+  // Stage 4: FRESH (progressRatio < 0.50 and daysRemaining > 2)
   return {
     status: 'safe',
+    stage: 'FRESH',
     days,
+    daysRemaining: days,
     totalDays,
+    totalShelfDays: totalDays,
+    progressRatio,
+    progressPct,
+    slot,
+    slotLabel,
     isHalfLife: false,
+    isEscalation: false,
     isCriticalNearExpiry: false,
     label: `${days}d Safe`,
     badgeClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold',
-    isPulse: false,
-    progressPct: Math.min(100, Math.max(30, Math.round((days / totalDays) * 100)))
+    isPulse: false
   };
+}
+
+export function calculateExpiry(expiryDateStr, alertDaysBefore = 2, productionDateStr = null) {
+  return evaluateProductExpiry(productionDateStr, expiryDateStr, ANCHOR_DATE);
 }
 
 export function escapeHtml(str) {

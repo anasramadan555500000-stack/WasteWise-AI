@@ -236,7 +236,26 @@ const translations = {
     featurePosStockSync: '⚡ Live POS Stock Sync',
     featureAiHalfLife: '🤖 AI Half-Life Expiry Engine',
     featureRealtimePnL: '📊 Real-Time P&L Analytics',
-    viewInInventory: 'Inspect in Inventory'
+    viewInInventory: 'Inspect in Inventory',
+
+    // Multi-Stage Expiry & Reminder Engine
+    dualDateSchedule: 'Dual-Date Lifecycle & Shelf-Life Schedule',
+    productionDate: 'Production / Batch Date',
+    productionDateSub: 'Start date of batch preparation',
+    liveShelfLife: 'Live Shelf-Life Calculation',
+    final48hEscalation: 'Final 48h Escalation (3x / day)',
+    final48hBadge: 'Escalation (3x/d)',
+    halfLifeBadge: 'Half-Life (50%)',
+    freshBadge: 'Fresh',
+    expiredBadge: 'Expired',
+    stageEscalation: 'Final 48h Escalation',
+    stageHalfLife: '50% Half-Life Reached',
+    stageExpired: 'Expired Stock',
+    stageFresh: 'Fresh Stock',
+    reminderSlotMorning: 'Morning Reminder (09:00)',
+    reminderSlotAfternoon: 'Afternoon Reminder (15:00)',
+    reminderSlotEvening: 'Evening Reminder (21:00)',
+    expiryMustBeAfterProduction: 'Expiry date must be strictly after production date.'
   },
   ar: {
     // Brand & Header
@@ -472,7 +491,26 @@ const translations = {
     featurePosStockSync: '⚡ مزامنة المخزون اللحظية لنقاط البيع',
     featureAiHalfLife: '🤖 محرك الذكاء الاصطناعي لنصف مدة الصلاحية',
     featureRealtimePnL: '📊 تحليلات فورية للأرباح والخسائر',
-    viewInInventory: 'معاينة في المخزون'
+    viewInInventory: 'معاينة في المخزون',
+
+    // Multi-Stage Expiry & Reminder Engine
+    dualDateSchedule: 'الجدول الزمني للإنتاج وانتهاء الصلاحية',
+    productionDate: 'تاريخ الإنتاج / التشغيلة',
+    productionDateSub: 'تاريخ بدء تحضير أو إنتاج الدفعة',
+    liveShelfLife: 'حساب فترة الصلاحية الحية',
+    final48hEscalation: 'تصعيد الـ 48 ساعة الأخيرة (3 تذكيرات يومياً)',
+    final48hBadge: 'تصعيد (3x/يوم)',
+    halfLifeBadge: 'نصف الصلاحية (50%)',
+    freshBadge: 'طازج',
+    expiredBadge: 'منتهي الصلاحية',
+    stageEscalation: 'تصعيد الـ 48 ساعة الأخيرة',
+    stageHalfLife: 'تم بلوغ 50% من الصلاحية',
+    stageExpired: 'مخزون منتهي الصلاحية',
+    stageFresh: 'مخزون طازج',
+    reminderSlotMorning: 'تذكير الصباح (09:00)',
+    reminderSlotAfternoon: 'تذكير الظهيرة (15:00)',
+    reminderSlotEvening: 'تذكير المساء (21:00)',
+    expiryMustBeAfterProduction: 'يجب أن يكون تاريخ انتهاء الصلاحية بعد تاريخ الإنتاج.'
   }
 };
 

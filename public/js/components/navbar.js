@@ -29,59 +29,64 @@ export function renderNavbar(container) {
 
   const activeAlerts = [];
   (products || []).forEach(p => {
-    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore, p.createdAt);
+    const prodDate = p.productionDate || p.production_date || p.createdAt || p.created_at;
+    const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore, prodDate);
 
-    // 1. Critical Near-Expiry Alert (<= 2 days)
-    if (expiry.days <= 2 && expiry.days >= 0) {
-      const alertId = `crit_exp_${p.id}_${p.expiryDate}`;
+    // 1. Stage: EXPIRED (days <= 0)
+    if (expiry.days <= 0) {
+      const alertId = `exp_${p.id}_${p.expiryDate}`;
       if (!dismissedAlerts.includes(alertId)) {
         activeAlerts.push({
           id: alertId,
           productId: p.id,
           productName: p.name,
-          type: 'critical_expiry',
-          status: 'critical',
+          stage: 'EXPIRED',
+          type: 'expired',
+          status: 'expired',
           severity: 'critical',
-          title: `🔴 ${t('criticalNearExpiry')}: ${p.name}`,
-          message: `${expiry.label} (${expiry.days}d remaining) • ${p.stock} ${t('leftInStock')}`,
-          icon: '🔴',
-          badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-bold border border-red-300 dark:border-red-800'
+          title: `⛔ ${t('expired')}: ${p.name}`,
+          message: `${expiry.label} • ${p.stock} ${t('leftInStock')} (Auto-blocked from POS checkout)`,
+          icon: '⛔',
+          badgeClass: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold border border-rose-300'
         });
       }
-    } 
-    // 2. Smart Half-Life Alert (50% of total shelf life reached, > 2 days)
-    else if (expiry.isHalfLife) {
+    }
+    // 2. Stage: FINAL_48H_ESCALATION (0 < days <= 2) -> 3x / day recurring reminders
+    else if (expiry.stage === 'FINAL_48H_ESCALATION' || (expiry.days <= 2 && expiry.days > 0)) {
+      // Slot-based reminder: morning, afternoon, evening
+      const alertId = `esc_${p.id}_${p.expiryDate}_${expiry.slot || 'slot'}`;
+      if (!dismissedAlerts.includes(alertId)) {
+        activeAlerts.push({
+          id: alertId,
+          productId: p.id,
+          productName: p.name,
+          stage: 'FINAL_48H_ESCALATION',
+          type: 'escalation_48h',
+          status: 'critical',
+          severity: 'critical',
+          title: `🔥 ${t('final48hEscalation')}: ${p.name}`,
+          message: `${expiry.slotLabel || 'Recurring Reminder'} • ${expiry.days}d remaining until expiration (${p.stock} units at risk)`,
+          icon: '🔥',
+          badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-extrabold border border-red-300 dark:border-red-800 animate-pulse'
+        });
+      }
+    }
+    // 3. Stage: HALF_LIFE_ALERT (progressRatio >= 0.50 and days > 2)
+    else if (expiry.stage === 'HALF_LIFE_ALERT' || expiry.isHalfLife) {
       const alertId = `halflife_${p.id}_${p.expiryDate}`;
       if (!dismissedAlerts.includes(alertId)) {
         activeAlerts.push({
           id: alertId,
           productId: p.id,
           productName: p.name,
+          stage: 'HALF_LIFE_ALERT',
           type: 'half_life',
           status: 'warning',
           severity: 'warning',
           title: `⚡ ${t('halfLifeReached')}: ${p.name}`,
-          message: `${expiry.label} (${expiry.days}d left of ${expiry.totalDays}d shelf life) • ${p.stock} ${t('leftInStock')}`,
+          message: `50% Shelf life reached (${expiry.days}d left of ${expiry.totalDays}d batch • ${expiry.progressPct}% elapsed) • ${p.stock} units`,
           icon: '⚡',
           badgeClass: 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800'
-        });
-      }
-    } 
-    // 3. Expired Alert (< 0 days)
-    else if (expiry.days < 0) {
-      const alertId = `past_exp_${p.id}_${p.expiryDate}`;
-      if (!dismissedAlerts.includes(alertId)) {
-        activeAlerts.push({
-          id: alertId,
-          productId: p.id,
-          productName: p.name,
-          type: 'expired',
-          status: 'expired',
-          severity: 'critical',
-          title: `⚠️ ${t('expired')}: ${p.name}`,
-          message: `${expiry.label} • ${p.stock} ${t('leftInStock')}`,
-          icon: '⛔',
-          badgeClass: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold border border-rose-300'
         });
       }
     }
@@ -95,6 +100,7 @@ export function renderNavbar(container) {
           id: alertId,
           productId: p.id,
           productName: p.name,
+          stage: 'LOW_STOCK',
           type: 'stock',
           status: 'low_stock',
           severity: p.stock <= 5 ? 'critical' : 'warning',
