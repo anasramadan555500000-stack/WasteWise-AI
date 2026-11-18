@@ -8,7 +8,9 @@ import { renderCashier } from './components/cashier.js';
 import { renderProductModal } from './components/productModal.js';
 import { renderReceiptModal } from './components/receiptModal.js';
 import { showToast } from './components/toast.js';
-import { t } from './utils/i18n.js';
+import { t, getLanguage } from './utils/i18n.js';
+import { playNotificationChime } from './utils/sound.js';
+import { evaluateProductExpiry, ANCHOR_DATE } from './utils/formatters.js';
 
 class App {
   constructor() {
@@ -242,11 +244,69 @@ class App {
         settings,
         isLoading: false
       });
+
+      // Multi-stage expiry notification scheduler & chime trigger
+      this.checkAndTriggerExpiryReminders(newProducts);
     } catch (err) {
       store.setState({ isLoading: false });
       if (!silent) {
         showToast(err.message, 'danger');
       }
+    }
+  }
+
+  /**
+   * Evaluates active stock and triggers 3x/day recurring escalation reminders
+   * and 50% half-life alerts with audio chime and toast notifications.
+   */
+  checkAndTriggerExpiryReminders(products) {
+    if (!products || !Array.isArray(products) || products.length === 0) return;
+    const isAr = getLanguage() === 'ar';
+    const todayStr = ANCHOR_DATE || new Date().toISOString().split('T')[0];
+    let triggeredAny = false;
+
+    products.forEach(p => {
+      const stock = parseInt(p.stock, 10) || 0;
+      if (stock <= 0) return; // Only active products with stock > 0
+
+      const prodDate = p.productionDate || p.production_date;
+      const expiry = evaluateProductExpiry(prodDate, p.expiryDate, ANCHOR_DATE);
+
+      // 1. FINAL_48H_ESCALATION (0 < daysRemaining <= 2) -> 3x Daily Escalation Reminder
+      if (expiry.stage === 'FINAL_48H_ESCALATION' || (expiry.daysRemaining > 0 && expiry.daysRemaining <= 2)) {
+        const slotKey = `wastewise_reminders_${p.id}_${todayStr}_slot_${expiry.slotNumber || 1}`;
+        try {
+          if (!localStorage.getItem(slotKey)) {
+            localStorage.setItem(slotKey, new Date().toISOString());
+            triggeredAny = true;
+            playNotificationChime();
+            const msg = isAr
+              ? `🔴 تذكير عاجل (3x/يوم): "${p.name}" متبقي له ${expiry.daysRemaining} يوم! (${expiry.slotLabel})`
+              : `🔴 URGENT (3x/Day Reminder): "${p.name}" has ${expiry.daysRemaining}d left! (${expiry.slotLabel})`;
+            showToast(msg, 'danger', 6500);
+          }
+        } catch (e) {}
+      }
+
+      // 2. HALF_LIFE_ALERT (progressRatio >= 0.50 and daysRemaining > 2) -> One-Time 50% Alert
+      else if (expiry.stage === 'HALF_LIFE_ALERT' || (expiry.progressRatio >= 0.50 && expiry.daysRemaining > 2)) {
+        const halfLifeKey = `wastewise_halflife_${p.id}`;
+        try {
+          if (!localStorage.getItem(halfLifeKey)) {
+            localStorage.setItem(halfLifeKey, new Date().toISOString());
+            triggeredAny = true;
+            playNotificationChime();
+            const msg = isAr
+              ? `🟠 نصف الصلاحية (50%): "${p.name}" استهلك نصف فترة الصلاحية (${expiry.daysRemaining} يوم متبقي). يرجى التخطيط لخصومات ترويجية!`
+              : `🟠 HALF-LIFE (50%): "${p.name}" reached 50% shelf life (${expiry.daysRemaining}d left). Consider AI markdown promotion!`;
+            showToast(msg, 'warning', 6500);
+          }
+        } catch (e) {}
+      }
+    });
+
+    if (triggeredAny && this.navContainer && store.getState().user) {
+      renderNavbar(this.navContainer);
     }
   }
 

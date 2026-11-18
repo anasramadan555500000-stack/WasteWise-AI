@@ -67,16 +67,19 @@ function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDa
   const progressRatio = Math.min(1.0, Math.max(0.0, elapsedMs / totalDurationMs));
   const progressPct = Math.round(progressRatio * 100);
 
-  // Time slot for 3 reminders per day (Morning 09:00, Afternoon 15:00, Evening 21:00)
+  // 3x Daily Escalation Reminder Slots (00:00-08:00, 08:00-16:00, 16:00-24:00)
   const currentHour = new Date().getHours();
-  let slot = 'morning';
-  let slotLabel = 'Morning Reminder (09:00)';
-  if (currentHour >= 12 && currentHour < 18) {
-    slot = 'afternoon';
-    slotLabel = 'Afternoon Reminder (15:00)';
-  } else if (currentHour >= 18) {
-    slot = 'evening';
-    slotLabel = 'Evening Reminder (21:00)';
+  let slotNumber = 1;
+  let slot = 'slot_1';
+  let slotLabel = 'Morning Slot (00:00–08:00)';
+  if (currentHour >= 8 && currentHour < 16) {
+    slotNumber = 2;
+    slot = 'slot_2';
+    slotLabel = 'Afternoon Slot (08:00–16:00)';
+  } else if (currentHour >= 16) {
+    slotNumber = 3;
+    slot = 'slot_3';
+    slotLabel = 'Evening Slot (16:00–24:00)';
   }
 
   // Stage 1: EXPIRED (remainingMs <= 0)
@@ -87,6 +90,7 @@ function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDa
       totalShelfDays,
       progressRatio: 1.0,
       progressPct: 100,
+      slotNumber,
       slot,
       slotLabel,
       label: daysRemaining === 0 ? 'Expires Today!' : `Expired ${Math.abs(daysRemaining)}d ago`,
@@ -108,6 +112,7 @@ function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDa
       totalShelfDays,
       progressRatio,
       progressPct,
+      slotNumber,
       slot,
       slotLabel,
       label: daysRemaining === 1 ? `Critical: 1d Left (${slotLabel})` : `Warning: 2d Left (${slotLabel})`,
@@ -129,6 +134,7 @@ function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDa
       totalShelfDays,
       progressRatio,
       progressPct,
+      slotNumber,
       slot,
       slotLabel,
       label: `Half-Life (50%): ${daysRemaining}d Left`,
@@ -149,6 +155,7 @@ function evaluateProductExpiry(productionDateInput, expiryDateInput, referenceDa
     totalShelfDays,
     progressRatio,
     progressPct,
+    slotNumber,
     slot,
     slotLabel,
     label: `${daysRemaining}d Safe`,
@@ -245,6 +252,7 @@ function enrichProductWithExpiry(p, refDateStr = config.SIMULATED_CURRENT_DATE) 
     progressRatio: evaluation.progressRatio,
     progressPct: evaluation.progressPct,
     stage: evaluation.stage,
+    slotNumber: evaluation.slotNumber,
     slot: evaluation.slot,
     slotLabel: evaluation.slotLabel,
     halfLifeThreshold: Math.floor(evaluation.totalShelfDays / 2),

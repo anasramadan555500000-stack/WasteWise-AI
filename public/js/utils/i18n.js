@@ -255,6 +255,16 @@ const translations = {
     reminderSlotMorning: 'Morning Reminder (09:00)',
     reminderSlotAfternoon: 'Afternoon Reminder (15:00)',
     reminderSlotEvening: 'Evening Reminder (21:00)',
+    reminderSlot1: 'Morning Slot (00:00-08:00)',
+    reminderSlot2: 'Afternoon Slot (08:00-16:00)',
+    reminderSlot3: 'Evening Slot (16:00-24:00)',
+    tagUrgentEscalation: '🔴 URGENT (≤ 2 Days • 3x/Day Reminder)',
+    tagHalfLife: '🟠 HALF-LIFE (50% Shelf Life Reached)',
+    tagExpired: '⛔ EXPIRED (Blocked from POS)',
+    tagLowStock: '📦 LOW STOCK',
+    applyAiMarkdown: 'Apply AI Markdown',
+    muteChime: 'Mute Expiry Chime',
+    unmuteChime: 'Unmute Expiry Chime',
     expiryMustBeAfterProduction: 'Expiry date must be strictly after production date.'
   },
   ar: {
@@ -510,6 +520,16 @@ const translations = {
     reminderSlotMorning: 'تذكير الصباح (09:00)',
     reminderSlotAfternoon: 'تذكير الظهيرة (15:00)',
     reminderSlotEvening: 'تذكير المساء (21:00)',
+    reminderSlot1: 'فترة الصباح (00:00-08:00)',
+    reminderSlot2: 'فترة الظهيرة (08:00-16:00)',
+    reminderSlot3: 'فترة المساء (16:00-24:00)',
+    tagUrgentEscalation: '🔴 عاجل (≤ يومين • 3 تذكيرات يومياً)',
+    tagHalfLife: '🟠 نصف الصلاحية (تم بلوغ 50%)',
+    tagExpired: '⛔ منتهي الصلاحية (محظور من البيع)',
+    tagLowStock: '📦 مخزون منخفض',
+    applyAiMarkdown: 'تطبيق خصم الذكاء الاصطناعي',
+    muteChime: 'كتم صوت التنبيه',
+    unmuteChime: 'تشغيل صوت التنبيه',
     expiryMustBeAfterProduction: 'يجب أن يكون تاريخ انتهاء الصلاحية بعد تاريخ الإنتاج.'
   }
 };

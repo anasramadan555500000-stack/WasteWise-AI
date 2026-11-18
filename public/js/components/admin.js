@@ -110,7 +110,7 @@ function renderInventoryRowsHtml(filteredProducts) {
         <!-- Actions -->
         <td class="py-3.5 px-4 text-end">
           <div class="flex items-center justify-end gap-1.5">
-            ${expiry.status === 'warning' ? `
+            ${(expiry.stage === 'FINAL_48H_ESCALATION' || expiry.stage === 'HALF_LIFE_ALERT' || expiry.status === 'warning') ? `
               <button class="btn-quick-markdown p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" data-id="${p.id}" title="${t('aiMarkdownEngine')}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               </button>

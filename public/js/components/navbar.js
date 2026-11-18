@@ -4,7 +4,8 @@ import { store } from '../state.js';
 import { api } from '../api.js';
 import { showToast } from './toast.js';
 import { renderProfileModal } from './profileModal.js';
-import { calculateExpiry } from '../utils/formatters.js';
+import { calculateExpiry, ANCHOR_DATE } from '../utils/formatters.js';
+import { isChimeMuted, toggleChimeMute } from '../utils/sound.js';
 import { t, getLanguage, toggleLanguage, isRTL } from '../utils/i18n.js';
 import { toggleTheme, isDarkMode } from '../utils/theme.js';
 
@@ -27,12 +28,13 @@ export function renderNavbar(container) {
     dismissedAlerts = JSON.parse(localStorage.getItem('wastewise_dismissed_alerts')) || [];
   } catch (e) {}
 
+  const todayStr = ANCHOR_DATE || new Date().toISOString().split('T')[0];
   const activeAlerts = [];
   (products || []).forEach(p => {
     const prodDate = p.productionDate || p.production_date || p.createdAt || p.created_at;
     const expiry = calculateExpiry(p.expiryDate, p.alertDaysBefore, prodDate);
 
-    // 1. Stage: EXPIRED (days <= 0)
+    // 1. Stage: EXPIRED (remainingMs <= 0)
     if (expiry.days <= 0) {
       const alertId = `exp_${p.id}_${p.expiryDate}`;
       if (!dismissedAlerts.includes(alertId)) {
@@ -44,17 +46,18 @@ export function renderNavbar(container) {
           type: 'expired',
           status: 'expired',
           severity: 'critical',
-          title: `⛔ ${t('expired')}: ${p.name}`,
-          message: `${expiry.label} • ${p.stock} ${t('leftInStock')} (Auto-blocked from POS checkout)`,
+          tag: t('tagExpired') || '⛔ EXPIRED (Blocked from POS)',
+          title: p.name,
+          message: `${expiry.label} • ${p.stock} ${t('leftInStock')} • Auto-blocked from POS checkout`,
           icon: '⛔',
-          badgeClass: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold border border-rose-300'
+          tagClass: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-extrabold border border-rose-300 dark:border-rose-800',
+          canMarkdown: false
         });
       }
     }
     // 2. Stage: FINAL_48H_ESCALATION (0 < days <= 2) -> 3x / day recurring reminders
     else if (expiry.stage === 'FINAL_48H_ESCALATION' || (expiry.days <= 2 && expiry.days > 0)) {
-      // Slot-based reminder: morning, afternoon, evening
-      const alertId = `esc_${p.id}_${p.expiryDate}_${expiry.slot || 'slot'}`;
+      const alertId = `wastewise_reminders_${p.id}_${todayStr}_slot_${expiry.slotNumber || 1}`;
       if (!dismissedAlerts.includes(alertId)) {
         activeAlerts.push({
           id: alertId,
@@ -64,16 +67,19 @@ export function renderNavbar(container) {
           type: 'escalation_48h',
           status: 'critical',
           severity: 'critical',
-          title: `🔥 ${t('final48hEscalation')}: ${p.name}`,
+          tag: t('tagUrgentEscalation') || '🔴 URGENT (≤ 2 Days • 3x/Day Reminder)',
+          title: p.name,
           message: `${expiry.slotLabel || 'Recurring Reminder'} • ${expiry.days}d remaining until expiration (${p.stock} units at risk)`,
           icon: '🔥',
-          badgeClass: 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 font-extrabold border border-red-300 dark:border-red-800 animate-pulse'
+          tagClass: 'bg-red-100 dark:bg-red-950/90 text-red-700 dark:text-red-300 font-black border border-red-300 dark:border-red-800 animate-pulse',
+          canMarkdown: true,
+          suggestedDiscountPct: 30
         });
       }
     }
     // 3. Stage: HALF_LIFE_ALERT (progressRatio >= 0.50 and days > 2)
     else if (expiry.stage === 'HALF_LIFE_ALERT' || expiry.isHalfLife) {
-      const alertId = `halflife_${p.id}_${p.expiryDate}`;
+      const alertId = `wastewise_halflife_${p.id}`;
       if (!dismissedAlerts.includes(alertId)) {
         activeAlerts.push({
           id: alertId,
@@ -83,10 +89,13 @@ export function renderNavbar(container) {
           type: 'half_life',
           status: 'warning',
           severity: 'warning',
-          title: `⚡ ${t('halfLifeReached')}: ${p.name}`,
+          tag: t('tagHalfLife') || '🟠 HALF-LIFE (50% Shelf Life Reached)',
+          title: p.name,
           message: `50% Shelf life reached (${expiry.days}d left of ${expiry.totalDays}d batch • ${expiry.progressPct}% elapsed) • ${p.stock} units`,
           icon: '⚡',
-          badgeClass: 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800'
+          tagClass: 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800',
+          canMarkdown: true,
+          suggestedDiscountPct: 20
         });
       }
     }
@@ -104,10 +113,12 @@ export function renderNavbar(container) {
           type: 'stock',
           status: 'low_stock',
           severity: p.stock <= 5 ? 'critical' : 'warning',
-          title: `📦 ${t('warning')}: ${p.name}`,
+          tag: t('tagLowStock') || '📦 LOW STOCK',
+          title: p.name,
           message: `${p.stock} ${t('leftInStock')} (Min: ${minThreshold})`,
           icon: '📦',
-          badgeClass: p.stock <= 5 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-bold border border-red-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold border border-amber-300'
+          tagClass: p.stock <= 5 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 font-bold border border-red-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-300 dark:border-slate-700',
+          canMarkdown: false
         });
       }
     }
@@ -236,11 +247,21 @@ export function renderNavbar(container) {
                       ${activeAlerts.length} ${t('active')}
                     </span>
                   </div>
-                  ${activeAlerts.length > 0 ? `
-                    <button id="nav-btn-dismiss-all" class="text-[11px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors cursor-pointer">
-                      ${t('markAllRead')}
+                  <div class="flex items-center gap-2">
+                    <!-- Notification Chime Mute/Unmute Toggle -->
+                    <button id="nav-btn-toggle-chime" class="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer" title="${isChimeMuted() ? (t('unmuteChime') || 'Unmute Expiry Chime') : (t('muteChime') || 'Mute Expiry Chime')}">
+                      ${isChimeMuted() ? `
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+                      ` : `
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                      `}
                     </button>
-                  ` : ''}
+                    ${activeAlerts.length > 0 ? `
+                      <button id="nav-btn-dismiss-all" class="text-[11px] font-bold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors cursor-pointer">
+                        ${t('markAllRead')}
+                      </button>
+                    ` : ''}
+                  </div>
                 </div>
 
                 <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
@@ -254,16 +275,26 @@ export function renderNavbar(container) {
                     <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-start justify-between gap-2.5 cursor-pointer notification-item" data-product-id="${alert.productId}" data-alert-id="${alert.id}">
                       <div class="flex items-start gap-2.5 min-w-0 flex-1">
                         <span class="text-base shrink-0 mt-0.5">${alert.icon}</span>
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                            <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${alert.tagClass}">
+                              ${alert.tag}
+                            </span>
+                          </div>
                           <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${alert.title}</div>
-                          <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">${alert.message}</div>
-                          <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded ${alert.badgeClass}">
-                              ${alert.type.toUpperCase().replace('_', ' ')}
+                          <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">${alert.message}</div>
+                          
+                          <div class="flex items-center gap-2 mt-2 flex-wrap">
+                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-0.5">
+                              <span>${t('viewInInventory')}</span>
+                              <span>&rarr;</span>
                             </span>
-                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-                              ${t('viewInInventory')} &rarr;
-                            </span>
+                            ${alert.canMarkdown ? `
+                              <button class="btn-notif-markdown py-0.5 px-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm transition-all cursor-pointer" data-product-id="${alert.productId}" data-pct="${alert.suggestedDiscountPct || 30}" title="${t('applyAiMarkdown')}">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                <span>${t('applyAiMarkdown')} (-${alert.suggestedDiscountPct || 30}%)</span>
+                              </button>
+                            ` : ''}
                           </div>
                         </div>
                       </div>
@@ -420,15 +451,51 @@ export function renderNavbar(container) {
       });
     });
 
+    // Notification Chime Mute/Unmute Handler
+    const chimeBtn = container.querySelector('#nav-btn-toggle-chime');
+    if (chimeBtn) {
+      chimeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const nextMuted = toggleChimeMute();
+        showToast(nextMuted ? (t('muteChime') || 'Expiry chime muted.') : (t('unmuteChime') || 'Expiry chime enabled.'), 'info');
+        renderNavbar(container);
+      });
+    }
+
+    // 1-Click Apply AI Markdown Handler on Notification Cards
+    const notifMarkdownBtns = container.querySelectorAll('.btn-notif-markdown');
+    notifMarkdownBtns.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const prodId = btn.getAttribute('data-product-id');
+        const pct = parseInt(btn.getAttribute('data-pct'), 10) || 30;
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span>Applying...</span>
+        `;
+        try {
+          const res = await api.applyMarkdown(prodId, pct);
+          showToast(res.message || `Applied ${pct}% AI markdown successfully!`, 'success');
+          notifDropdown.classList.add('hidden');
+          window.dispatchEvent(new CustomEvent('wastewise:refresh'));
+        } catch (err) {
+          showToast(err.message, 'danger');
+          btn.disabled = false;
+        }
+      });
+    });
+
     const notifItems = container.querySelectorAll('.notification-item');
     notifItems.forEach(item => {
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.notification-dismiss-btn')) return;
+        if (e.target.closest('.notification-dismiss-btn') || e.target.closest('.btn-notif-markdown')) return;
         const prodId = item.getAttribute('data-product-id');
-        const product = products.find(p => p.id === prodId);
+        const product = (products || []).find(p => p.id === prodId);
         if (product) {
           notifDropdown.classList.add('hidden');
           sessionStorage.setItem('wastewise_admin_tab', 'inventory');
+          store.state.highlightedProductId = prodId;
           store.setState({
             currentView: 'admin',
             adminTab: 'inventory',

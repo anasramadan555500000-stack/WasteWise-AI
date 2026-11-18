@@ -27,6 +27,9 @@ router.get('/', authenticateToken, async (req, res) => {
           local.sellingPrice = sp.sellingPrice;
           local.price = sp.sellingPrice;
           local.expiryDate = sp.expiryDate;
+          local.expiry_date = sp.expiry_date || sp.expiryDate;
+          local.productionDate = sp.productionDate || sp.production_date || local.productionDate;
+          local.production_date = sp.production_date || sp.productionDate || local.production_date;
         } else {
           products.push(sp);
         }
